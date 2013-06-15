@@ -1,0 +1,11 @@
+<launch>
+
+  <node name="republish" type="republish" pkg="image_transport" args="compressed in:=/map_image/full raw out:=/map_image_raw" />
+  
+  <param name="/map_image/full//compressed/jpeg_quality" type="int" value="100" />
+   <node pkg="map_to_jpeg" type="image_to_map_node" name="jpeg_to_map">
+	<param name="resolution" value="0.05" />
+   </node>
+
+
+</launch>

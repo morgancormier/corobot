@@ -1,0 +1,57 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+@section Services
+
+The corobot_arm node provides the following device services:
+
+- move_arm
+     - Service Type : corobot_srvs::MoveArm
+     - move the arm of the Corobot.
+
+- move_wrist
+     - Service Type : corobot_srvs::MoveArm
+     - Change the orientation of the wrist.
+
+- move_gripper
+     - Service Type : corobot_srvs::MoveArm
+     - Set a new position to the gripper.
+
+- reset_arm
+     - Service Type : corobot_srvs::MoveArm
+     - Reset the position the Corobot's arm.
+
+- ssc32_set_speed
+     - Service Type : corobot_srvs::SetSpeed
+     - Set the speed of the left and right motors of the robot
+
+
+@section Topics
+
+@b Input
+
+
+@b Output
+
+- ssc32_info
+     - Message Type : corobot_msgs::ssc32_info
+     - Get information about the initialization of the ssc32 devide when the node starts
+
+
+
+\section codeapi Code API
+
+<!--
+Provide links to specific auto-generated API documentation within your
+package that is of particular interest to a reader. Doxygen will
+document pretty much every part of your code, so do your best here to
+point the reader to the actual API.
+
+If your codebase is fairly large or has different sets of APIs, you
+should use the doxygen 'group' tag to keep these APIs together. For
+example, the roscpp documentation has 'libros' group.
+-->
+
+
+*/

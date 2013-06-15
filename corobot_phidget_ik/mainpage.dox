@@ -1,0 +1,73 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+\b corobot_phidgetIK is ... 
+
+@section Services
+The phidget node provides the following device services:
+
+ - phidgetnode_set_odom
+     - Service Type : corobot_srvs::SetOdom
+     - This service is used to set the odometer.
+
+@section Topics
+
+@b Input
+
+@b Output
+
+ - position_data
+     - Message Type : corobot_msgs::PosMsg
+     - This topic sends every 200ms the position of the robot.
+
+- infrared_data
+     - Message Type : corobot_msgs::IrMsg
+     - This topic sends every 200ms the voltage value of both infrared sensors. It also send the conversion in meters.
+
+- power_data
+     - Message Type : corobot_msgs::PowerMsg
+     - This topic sends every 200ms the power of battery left(in Volt)
+
+- bumper_data
+     - Message Type : corobot_msgs::BumperMsg
+     - This topic sends every 200ms information coming from the Bumper to tell if an obstacle has been hit or not.
+
+- gripper_data
+     - Message Type : corobot_msgs::GrippergMsg
+     - This topic sends every 200ms information coming from the gripper.
+
+- spatial_data
+     - Message Type : corobot_msgs::spatial
+     - This topic sends every 200ms information coming from the imu.
+
+- imu_data
+     - Message Type : sensor_msgs::Imu
+     - This topic sends every 200ms information coming from the imu.
+
+- phidget_info
+     - Message Type : corobot_msgs::phidget_info
+     - This topic sends once at the creation of the node information related the initialization of the phidget device.
+
+- sonar_data
+     - Message Type : corobot_msgs::RangeSensor
+     - This topic sends every 50ms the range in meters of every sonar sensors connected, if any. 
+
+
+
+
+\section codeapi Code API
+
+<!--
+Provide links to specific auto-generated API documentation within your
+package that is of particular interest to a reader. Doxygen will
+document pretty much every part of your code, so do your best here to
+point the reader to the actual API.
+
+If your codebase is fairly large or has different sets of APIs, you
+should use the doxygen 'group' tag to keep these APIs together. For
+example, the roscpp documentation has 'libros' group.
+-->
+
+
+*/

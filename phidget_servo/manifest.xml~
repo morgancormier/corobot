@@ -1,0 +1,20 @@
+<package>
+  <description brief="PhidgetServo">
+	Node interfacing the Phidget Advanced Servo Controller. 
+	This package depends on the Phidget client library being installed manually:
+		http://www.phidgets.com/drivers.php
+  </description>
+  <author>Morgan Cormier/mcormier@coroware.com</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/PhidgetServo</url>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="corobot_srvs" />
+  <depend package="corobot_msgs" />
+  <depend package="diagnostic_updater" />
+
+
+</package>
+
+

@@ -1,0 +1,17 @@
+port: /dev/ttyUSB0
+read_rate: 15
+write_rate: 25
+controller_type: arbotix
+dynamixels: {
+    base: {id: 1, neutral: 205, max_angle: 180, min_angle: -60, max_speed: 90},
+    shoulder: {id: 2, max_angle: 150, min_angle: -150, max_speed: 90},
+    shoulder2: {id: 3, synched: 2, max_angle: 150, min_angle: -150, max_speed: 90},
+    elbow: {id: 4, max_angle: 150, min_angle: -150, max_speed: 90},
+    elbow2: {id: 5, synched: 0, max_angle: 150, min_angle: -150, max_speed: 90},
+    wrist_flex: {id: 6, max_angle: 100, min_angle: -100, max_speed: 90},
+    wrist_rotation: {id: 7, max_angle: 100, min_angle: -100, max_speed: 90},
+    gripper: {id: 8, max_speed: 90},
+}
+controllers: {
+    arm_controller: {type: follow_controller, joints: [base, shoulder, shoulder2, elbow, elbow2, wrist_flex, wrist_rotation], onboard: False }
+}

@@ -1,0 +1,13 @@
+port: /dev/ttyUSB0
+read_rate: 15
+write_rate: 25
+controller_type: ssc32
+dynamixels: {
+    shoulder: {id: 4, max_angle: 150, min_angle: -150, max_speed: 90},
+    elbow: {id: 5, max_angle: 150, min_angle: -150, max_speed: 90},
+    wrist_rotation: {id: 6, max_angle: 100, min_angle: -100, max_speed: 90},
+    gripper: {id: 7, max_speed: 90},
+}
+controllers: {
+    arm_controller: {type: follow_controller, joints: [shoulder, elbow, wrist_flex], onboard: False }
+}

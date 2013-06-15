@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package>
+  <name>corobot_state_tf</name>
+  <version>1.0.0</version>
+  <description>
+
+     corobot_state_tf register 2 topics, sending the odometry in the form of a nav_msgs::Odometry message and the Transform.
+
+  </description>
+
+  <maintainer email="mcormier@coroware.com">Morgan Cormier</maintainer>
+  <license>BSD</license>
+  <url type="website">http://ros.org/wiki/corobot_state_tf</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>corobot_msgs</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>corobot_msgs</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+
+</package>
+
+

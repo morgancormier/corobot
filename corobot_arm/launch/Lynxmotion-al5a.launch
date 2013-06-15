@@ -1,0 +1,13 @@
+<launch>
+
+<arg name="ssc32_port" />
+
+	<node pkg="corobot_ssc32" name="ssc32control" type="ssc32_motor">
+		<param name="ssc32_port" value="$(arg ssc32_port)"/>
+	</node>
+
+	  <node pkg="corobot_arm" name="Arm" type="corobot_arm">
+		<rosparam file="$(find corobot_arm)/config/lynxmotion-al5a.yaml" command="load" />
+	  </node>
+
+</launch>

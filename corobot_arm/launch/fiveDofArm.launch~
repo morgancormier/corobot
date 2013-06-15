@@ -1,0 +1,12 @@
+<launch>
+
+  <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
+      <rosparam file="$(find corobot_arm)/config/arm.yaml" command="load" />
+  </node>
+
+  <node name="gripper_controller" pkg="corobot_arm" type="one_side_gripper_controller.py">
+      <param name="invert" value="true"/>
+      <param name="pad_width" value="0.0254"/>
+  </node>
+
+</launch>

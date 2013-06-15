@@ -1,0 +1,6 @@
+\subsubsection parameters ROS parameters
+
+Reads and maintains the following parameters on the ROS server
+
+- \b "~camera_activated" : \b [bool] Activate the camera or not min: False, default: True, max: True
+

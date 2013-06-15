@@ -1,0 +1,35 @@
+<package>
+  <description brief="corobot_teleop">
+
+     Teleoperation package that permits to control the Corobot. It also permits to connect to a distant Corobot.
+     Data such as Camera, sensor (IR, encoder, batterie life) values can be read.
+
+  </description>
+  <author>Morgan Cormier/Gang Li/mcormier@coroware.com</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/corobot_teleop</url>
+
+  <depend package="roscpp"/>
+  <depend package="rospy"/>
+  <depend package="PhidgetMotor"/>
+  <depend package="sensor_msgs"/>
+  <depend package="PhidgetServo" />
+  <depend package="corobot_arm" />
+  <depend package="corobot_phidgetIK"/>
+  <depend package="corobot_srvs" />
+  <depend package="corobot_msgs" />
+  <depend package="corobot_camera" />
+  <depend package="corobot_hokuyo" />
+  <depend package="corobot_state_tf" />
+  <depend package="roslaunch" />
+  <depend package="corobot_ssc32" />
+  <depend package="corobot_pantilt" />
+  <depend package="corobot_gps" />
+  <depend package="joy" />
+  <depend package="corobot_joystick" />
+  <depend package="openni_camera" />
+  <depend package="nav_msgs" />
+  <rosdep name="qt4"/>
+  
+</package>

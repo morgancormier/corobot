@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package>
+  <name>corobot_joystick</name>
+  <version>1.0.0</version>
+  <description>
+
+     Package that permits to control the Corobot with a joystick. 
+
+  </description>
+
+  <author>Gang Li/GangLi@coroware.com</author>
+  <maintainer email="mcormier@coroware.com">Morgan Cormier</maintainer>
+  <license>BSD</license>
+  <url type="website">http://ros.org/wiki/corobot_joystick</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>joy</build_depend>
+  <build_depend>corobot_msgs</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>joy</run_depend>
+  <run_depend>corobot_msgs</run_depend>
+
+</package>
+
+

@@ -1,0 +1,30 @@
+<!-- 
+This is an example of Launch file for a Corobot having two Phidgets Servo controller and two arms. 
+-->
+
+<launch>
+
+<arg name="offset" />
+<arg name="psc_firstSerialNumber" />
+<arg name="psc_secondSerialNumber" />
+
+<node pkg="phidget_servo" name="phidget_servo" type="phidget_servo" ns="/arm" >
+  <param name="serialNumber" value="$(arg psc_firstSerialNumber)"/> <!-- -1(default value) means connect to the first Phidget Advanced servo controller you see -->
+</node>
+<node pkg="phidget_servo" name="phidget_servo" type="phidget_servo" ns="/body" >
+  <param name="serialNumber" value="$(arg psc_secondSerialNumber)"/> <!-- -1(default value) means connect to the first Phidget Advanced servo controller you see -->
+</node>
+
+  <node pkg="corobot_arm" name="firstArm" type="corobot_arm" ns="/arm/firstArm">
+    <remap from="/arm/firstArm/phidgetServo_setPosition" to="/arm/phidgetServo_setPosition"/>
+    <remap from="/arm/firstArm/phidgetServo_setType" to="/arm/phidgetServo_setType"/>
+	<rosparam file="$(find corobot_arm)/config/corobot_arm_phidget.yaml" command="load" />
+  </node>
+
+  <node pkg="corobot_arm" name="secondArm" type="corobot_arm" ns="/arm/secondArm">
+    <remap from="/arm/secondArm/phidgetServo_setPosition" to="/arm/phidgetServo_setPosition"/>
+    <remap from="/arm/secondArm/phidgetServo_setType" to="/arm/phidgetServo_setType"/>
+	<rosparam file="$(find corobot_arm)/config/corobot_arm_phidget2.yaml" command="load" />
+  </node>
+
+</launch>

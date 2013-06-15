@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<launch>
+	<node name="dynamic_uvc_cam" pkg="corobot_camera" type="dynamic_sender" output="screen" >
+		<param name="device" value="/dev/video0" />
+		<param name="camera_parameter_file" value="$(find corobot_camera)/camera_parameters/quickcam_pro_9000.txt" />
+		<param name="topic" value="/camera/image_raw" />
+		<param name="width" value="960" />
+		<param name="height" value="720" />
+		<param name="immediately" value="true" />
+		<param name="fps" value="30" />
+	</node>
+
+	<node name="image_proc" pkg="image_proc" type="image_proc" ns="camera" />
+
+	<node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+ 		<remap from="image" to="/camera/image_raw"/>
+	</node>
+
+<!--
+	<node name="image_view_undistorted" pkg="image_view" type="image_view" respawn="false" output="screen">
+		<remap from="image" to="/camera/image_rect_color"/>
+	</node>
+
+	<node name="image_view_mono" pkg="image_view" type="image_view" respawn="false" output="screen">
+		<remap from="image" to="/camera/image_mono"/>
+	</node>
+
+	<node name="image_view_rect" pkg="image_view" type="image_view" respawn="false" output="screen">
+		<remap from="image" to="/camera/image_rect"/>
+	</node> 
+//-->
+</launch>

@@ -1,0 +1,135 @@
+<launch>
+
+<param name="/use_sim_time" value="true"/>
+
+<arg name="Explorer" value="1"/> <!-- 1 if you have a Corobot Explorer, 0 if you have a Corobot Classic -->
+
+<!--***** Rear Camera *****-->
+<arg name="RearCamera" value="0"/> <!-- 1 if you have one rear camera, 0 if you don't -->
+<arg name="cameraRear_jpeg_compression" value="0"/> <!-- 1 if you want to enable to jpeg compression, 0 to unable it -->
+<arg name="cameraRear_port" value="/dev/video1"/> <!-- port of the camera -->
+<arg name="cameraRear_parameter_file" value="$(find corobot_camera)/camera_parameters/quickcam_pro_9000.txt"/> <!-- parameter file of the camera -->
+<arg name="cameraRear_topic" value="/REAR/image_raw"/> <!-- Topic where the images will be send on -->
+<arg name="cameraRear_width" value="640"/> <!-- Width of the images -->
+<arg name="cameraRear_height" value="480"/> <!-- Height of the images -->
+<arg name="cameraRear_immediately" value="true"/> <!-- if true starts the camera immediately, if false requires a manual start-->
+<arg name="cameraRear_fps" value="25"/> <!-- Number of images per second received from the camera-->
+<arg name="cameraRear_JpegQuality" value="30"/> <!-- JPEG quality, if 100 high quality, if 0 very bad quality -->
+
+<!--***** Front Camera *****-->
+<arg name="FrontCamera" value="1"/> <!-- 1 if you have one front camera, 0 if you don't -->
+<arg name="cameraFront_jpeg_compression" value="0"/> <!-- 1 if you want to enable to jpeg compression, 0 to unable it. Attention, if you have a pan tilt camera Logitech Orbit AF the compression JPEG won't work as the image is already compressed. -->
+<arg name="cameraFront_pantilt" value="0"/> <!-- 1 if you have the front camera is pan tilt, 0 if you don't -->
+<arg name="cameraFront_port" value="/dev/video0"/> <!-- port of the camera -->
+<arg name="cameraFront_parameter_file" value="$(find corobot_camera)/camera_parameters/quickcam_pro_9000.txt"/> <!-- parameter file of the camera -->
+<arg name="cameraFront_topic" value="/PTZ/image_raw"/> <!-- Topic where the images will be send on -->
+<arg name="cameraFront_width" value="640"/> <!-- Width of the images -->
+<arg name="cameraFront_height" value="480"/> <!-- Height of the images -->
+<arg name="cameraFront_immediately" value="true"/> <!-- if true starts the camera immediately, if false requires a manual start-->
+<arg name="cameraFront_fps" value="25"/> <!-- Number of images per second received from the camera-->
+<arg name="cameraFront_JpegQuality" value="50"/> <!-- JPEG quality, if 100 high quality, if 0 very bad quality -->
+
+	<node pkg="corobot_hokuyo" name="hokuyo" type="corobot_hokuyo" >
+		<param name="skip" type="int" value="1"/>
+		<param name="calibrate_time" type="bool" value="false"/>
+
+	</node>
+
+	<node pkg="corobot_phidgetIK" name="phidgettoROS" type="corobot_phidget" >
+		<param name="rearBumper" type="bool" value="0"/>
+	</node>
+
+	<node pkg="phidget_motor" name="phidget_motor" type="PhidgetMotor.py" />
+
+	<node pkg="corobot_state_tf" name="corobot_state_tf" type="corobot_state_tf" output="screen">
+		<param name="Explorer" type="bool" value="$(arg Explorer)"/>
+		<param name="publish_odom_tf" type="bool" value="1"/>
+	</node>
+
+	 <node pkg="rviz" name="rviz" type="rviz" args="-d $(find corobot_state_tf)/launch/gmapping.vcg"/> 
+
+	<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
+		<remap from="odom" to="odometry"/>
+    		<param name="output_frame" value="odom_combined"/>
+		<param name="freq" value="20.0"/>
+		<param name="sensor_timeout" value="1.0"/>
+		<param name="odom_used" value="true"/>
+		<param name="imu_used" value="true"/>
+		<param name="vo_used" value="false"/>
+		<param name="debug" value="false"/>
+		<param name="self_diagnose" value="false"/>
+  	</node>	
+
+	<node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
+		<remap from="base_scan" to="scan"/>
+		<param name="map_udpate_interval" value="2.0"/>
+		<param name="odom_frame" value="odom_combined"/>
+		<param name="base_frame" value="base_footprint"/>
+		<param name="maxUrange" value="25.0"/>
+		<param name="maxRange" value="30.0"/>
+		<param name="sigma" value="0.05"/>
+		<param name="kernelSize" value="1"/>
+		<param name="lstep" value="0.05"/>
+		<param name="astep" value="0.05"/>
+		<param name="iterations" value="5"/>
+		<param name="lsigma" value="0.075"/>
+		<param name="ogain" value="3.0"/>
+		<param name="lskip" value="0"/>
+		<param name="srr" value="0.3"/>
+		<param name="srt" value="0.3"/>
+		<param name="str" value="0.3"/>
+		<param name="stt" value="0.3"/>
+		<param name="linearUpdate" value="0.5"/>
+		<param name="angularUpdate" value="0.3"/>
+		<param name="temporalUpdate" value="3.0"/>
+		<param name="resampleThreshold" value="0.5"/>
+		<param name="particles" value="100"/>
+		<param name="xmin" value="-50.0"/>
+		<param name="ymin" value="-50.0"/>
+		<param name="xmax" value="50.0"/>
+		<param name="ymax" value="50.0"/>
+		<param name="delta" value="0.05"/>
+		<param name="llsamplerange" value="0.01"/>
+		<param name="llsamplestep" value="0.01"/>
+		<param name="lasamplerange" value="0.005"/>
+		<param name="lasamplestep" value="0.005"/> 
+	</node>
+	
+ 	<node pkg="corobot_teleop" name="GUI" type="corobot_teleop" />
+
+  <group if="$(arg FrontCamera)">
+	  <param name="PTZ/image_raw/compressed/jpeg_quality" type="int" value="$(arg cameraFront_JpegQuality)" />
+
+	  <node pkg="corobot_camera" name="PTZcamera" type="dynamic_sender" ns="/PTZ" output="screen">
+		<param name="device" value="$(arg cameraFront_port)"/>
+		<param name="camera_parameter_file" value="$(arg cameraFront_parameter_file)" />
+		<param name="topic" value="$(arg cameraFront_topic)" />
+		<param name="width" value="$(arg cameraFront_width)" />
+		<param name="height" value="$(arg cameraFront_height)" />
+		<param name="immediately" value="$(arg cameraFront_immediately)" />
+		<param name="fps" value="$(arg cameraFront_fps)" />
+	  </node>
+	  <group if="$(arg cameraFront_pantilt)">
+	  	<node pkg="corobot_pantilt" name="PTZcontrol" type="corobot_pantilt">
+			<param name="device" value="$(arg cameraFront_port)"/>
+			<param name="script_path" value="$(find corobot_pantilt)/src/init_camera.sh"/>
+		</node>
+	  </group>
+  </group>
+
+  <group if="$(arg RearCamera)">
+	  <param name="REAR/image_raw/compressed/jpeg_quality" type="int" value="$(arg cameraRear_JpegQuality)" />
+
+	  <node pkg="corobot_camera" name="REARcamera" type="dynamic_sender" ns="/REAR">
+		<param name="device" value="$(arg cameraRear_port)"/>
+		<param name="camera_parameter_file" value="$(arg cameraRear_parameter_file)" />
+		<param name="topic" value="$(arg cameraRear_topic)" />
+		<param name="width" value="$(arg cameraRear_width)" />
+		<param name="height" value="$(arg cameraRear_height)" />
+		<param name="immediately" value="$(arg cameraRear_immediately)" />
+		<param name="fps" value="$(arg cameraRear_fps)" />
+	  </node>
+  </group>
+
+   
+</launch>

@@ -1,0 +1,10 @@
+<launch>
+    <node
+        pkg="PhidgetMotor"
+        name="PhidgetMotor"
+        type="PhidgetMotor.py"
+        args=""
+        output="log"
+        respawn="true"
+     />
+</launch>

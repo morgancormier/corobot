@@ -1,0 +1,27 @@
+<!-- 
+This is an example of Launch file for a Corobot having one Phidgets Servo controller and one arms. 
+-->
+
+<launch>
+
+	<arg name="offset" />
+	<arg name="ssc32_port" />
+	<arg name="PhidgetMotorController" />
+
+	<group unless="$(arg PhidgetMotorController)">
+		<node pkg="corobot_ssc32" name="ssc32control" type="ssc32_motor">
+			<remap from="/ssc32_velocity" to="/PhidgetMotor"/>
+			<param name="ssc32_port" value="$(arg ssc32_port)"/>
+		</node>
+	</group>
+	<group if="$(arg PhidgetMotorController)">
+		<node pkg="corobot_ssc32" name="ssc32control" type="ssc32_motor">
+			<param name="ssc32_port" value="$(arg ssc32_port)"/>
+		</node>
+	</group>
+
+	<node pkg="corobot_arm" name="Arm" type="corobot_arm">
+		 <rosparam file="$(find corobot_arm)/config/old_corobot_arm.yaml" command="load" />
+	</node>
+
+</launch>

@@ -1,0 +1,18 @@
+<package>
+  <description brief="corobot_arm">
+
+	High Level interface to move the arm of the Corobot.
+
+  </description>
+  <author>Morgan Cormier/mcormier@coroware.com</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/corobot_arm</url>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="PhidgetServo"/>
+  <depend package="corobot_srvs"/>
+
+</package>
+
+

@@ -1,0 +1,7 @@
+\subsubsection usage Usage
+\verbatim
+<node name="corobot_camera" pkg="corobot_camera" type="corobot_camera">
+  <param name="camera_activated" type="bool" value="True" />
+</node>
+\endverbatim
+

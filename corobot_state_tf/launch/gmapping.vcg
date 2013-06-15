@@ -1,0 +1,35 @@
+Background\ ColorR=0
+Background\ ColorG=0
+Background\ ColorB=0
+Fixed\ Frame=/map
+Target\ Frame=/map
+Map.Alpha=0.7
+Map.Draw\ Behind=0
+Map.Enabled=1
+Map.Topic=/map
+TF.All\ Enabled=1
+TF.Enabled=1
+TF.Frame\ Timeout=15
+TF.Marker\ Scale=1
+TF.Show\ Arrows=1
+TF.Show\ Axes=1
+TF.Show\ Names=0
+TF.Update\ Interval=0
+Tool\ 2D\ Nav\ GoalTopic=goal
+Tool\ 2D\ Pose\ EstimateTopic=initialpose
+Camera\ Type=rviz::OrbitViewController
+Camera\ Config=0.952796 1.35115 35.5837 0 0 0
+Property\ Grid\ State=selection=Target Frame;expanded=.Global Options,Map.Enabled,TF.Enabled,TF./base_link/base_link,TF./laser/laser,TF./map/map,TF./odom/odom,TF.Enabled.TF.Tree,TF./mapTree/map,TF./odomTree/odom,TF./base_linkTree/base_link,TF./laserTree/laser;scrollpos=0,0;splitterpos=154,297;ispageselected=1
+[Display0]
+Name=Map
+Package=rviz
+ClassName=rviz::MapDisplay
+[Display1]
+Name=TF
+Package=rviz
+ClassName=rviz::TFDisplay
+[TF.]
+base_linkEnabled=1
+laserEnabled=1
+mapEnabled=1
+odomEnabled=1

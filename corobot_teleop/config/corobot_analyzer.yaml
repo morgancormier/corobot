@@ -1,0 +1,38 @@
+pub_rate: 1.0 # Optional
+base_path: '' # Optional, prepended to all diagnostic output
+analyzers:
+   Phidget:
+    type: diagnostic_aggregator/AnalyzerGroup
+    path: Phidget
+    analyzers:
+      InterfaceKit:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: InterfaceKit
+        contains: Interface Kit
+        remove_prefix: phidgettoROS
+      Spatial:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Spatial 
+        contains: Spatial
+        remove_prefix: phidgettoROS
+      Encoders:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Encoders 
+        contains: Encoders
+        remove_prefix: phidgettoROS
+      Servos:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Servos
+        contains: Servo
+        remove_prefix: PhidgetServo
+
+   Webcam:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: Webcam
+    find_and_remove_prefix: PTZ
+   GPS:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: GPS
+    find_and_remove_prefix: corobot_gps
+
+

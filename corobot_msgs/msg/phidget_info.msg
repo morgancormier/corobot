@@ -1,0 +1,3 @@
+uint8 phidget888_connected
+uint8 phidget_encoder_connected
+uint8 info

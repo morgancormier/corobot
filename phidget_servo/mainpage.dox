@@ -1,0 +1,87 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+@section Services
+
+The PhidgetServo node provides the following device services:
+
+-  phidgetServo_getEngaged
+     - Service Type : corobot_srvs::GetEngaged
+     - Get the status of a servo motor connected, to know if it is engaged ( powered on) or not.
+
+-  phidgetServo_setEngaged
+     - Service Type : corobot_srvs::SetEngaged
+     - Set the status of a servo motor, engaged( powered on) or not.
+
+-  phidgetServo_getPosition
+     - Service Type : corobot_srvs::GetPosition
+     - Get the position of a servo motor.
+
+-  phidgetServo_setPosition
+     - Service Type : corobot_srvs::SetPosition
+     - Set the position of a servo motor.
+
+-  phidgetServo_getPositionMax
+     - Service Type : corobot_srvs::GetPosition
+     - Get the maximum position possible of a servo motor.
+
+-  phidgetServo_getPositionMin
+     - Service Type : corobot_srvs::GetPosition
+     - Get the minimum position possible of a servo motor
+
+-  phidgetServo_getMotorCount
+     - Service Type : corobot_srvs::GetMotorCount
+     - Get the maximum number of servo motors that can be connected to this Phidget Servo controller.
+
+-  phidgetServo_setServoParameters
+     - Service Type : corobot_srvs::SetParam
+     - Get the parameters of a servo motor.
+
+-  phidgetServo_getSerialNumber
+     - Service Type : corobot_srvs::GetSerialNumber
+     - Get the serial number of the current phidget servo controller. Useful if there are two phidget servo controllers connected.
+
+-  phidgetServo_getServoType
+     - Service Type : corobot_srvs::GetType
+     - Get the type of servo motor pluged in
+
+-  phidgetServo_setServoType
+     - Service Type : corobot_srvs::SetType
+     - Set the servo motor to one of the defined types
+
+@section Topics
+
+@b Input
+
+-  phidgetServo_setPosition
+     - Topic type: corobot_msgs::GetPosition
+     - Set the position possible of a servo motor
+
+-  phidgetServo_setType
+     - Topic Type : corobot_msgs::ServoType
+     - The type of the concerned servo motor is set each time a message is received on this topic.
+
+@b Output
+
+-  phidgetServo_getPosition
+     - Message Type : corobot_msgs::ServoPosition
+     - Get the position possible of a servo motor
+
+
+
+\section codeapi Code API
+
+<!--
+Provide links to specific auto-generated API documentation within your
+package that is of particular interest to a reader. Doxygen will
+document pretty much every part of your code, so do your best here to
+point the reader to the actual API.
+
+If your codebase is fairly large or has different sets of APIs, you
+should use the doxygen 'group' tag to keep these APIs together. For
+example, the roscpp documentation has 'libros' group.
+-->
+
+
+*/

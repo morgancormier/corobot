@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="corobot_pantilt" name="PTZcontrol" type="corobot_pantilt">
+			<param name="device" value="/dev/video0"/>
+			<param name="script_path" value="$(find corobot_pantilt)/src/init_camera.sh"/>
+</launch>
