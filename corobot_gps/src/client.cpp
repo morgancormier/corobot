@@ -11,26 +11,33 @@ using namespace corobot_msgs;
 using namespace sensor_msgs;
 
 class GPSDClient {
+//Class that does the interface with the GPS device
   public:
+    //class constructor
     GPSDClient() : privnode("~"), use_gps_time(true) {
-#if GPSD_API_MAJOR_VERSION < 5
+#if GPSD_API_MAJOR_VERSION < 5 // We need different methods of doing depending on the version of the gpsd api
     gps = new gpsmm();
     gps_state = 0;
 #endif
-}
+    }
 
     ~GPSDClient()
     {
 	delete gps;
     }
 
-    bool start() {
-      gps_fix_pub = node.advertise<GPSFix>("extended_fix", 1);
-      navsat_fix_pub = node.advertise<NavSatFix>("fix", 1);
+    bool start() 
+    /**
+     * Function that innitialize ros topics and parameters, as well as initialize the gps device.
+     */
+     { 
+      gps_fix_pub = node.advertise<GPSFix>("extended_fix", 1); //declare topic with gps information. This is the extended version of the message and includes more data than the non-extended version.
+      navsat_fix_pub = node.advertise<NavSatFix>("fix", 1); //topic that send gps information
 
-      privnode.getParam("use_gps_time", use_gps_time);
+      privnode.getParam("use_gps_time", use_gps_time); // decide if we use the gps time or the ros time for the timestamp of the messages
 
-      std::string host = "localhost";
+ 	// We need to know where to get the data from gpsd
+      std::string host = "localhost"; 
       int port = 2947;
       privnode.getParam("host", host);
       privnode.getParam("port", port);
@@ -38,6 +45,7 @@ class GPSDClient {
       char port_s[12];
       snprintf(port_s, 12, "%d", port);
 
+	//open the gps device
       gps_data_t *resp;
 #if GPSD_API_MAJOR_VERSION >= 5
     gps = new gpsmm(host.c_str(), port_s);
@@ -45,11 +53,11 @@ class GPSDClient {
       resp = gps->open(host.c_str(), port_s);
       if (resp == NULL) {
         ROS_ERROR("Failed to open GPSd");
-	gps_state = 1;
+	gps_state = 1; // used for diagnostics
         return false;
       }
 #endif
-
+	// Again we need to differentiate the different gpsd api versions
 #if GPSD_API_MAJOR_VERSION >= 5
       resp = gps->stream(WATCH_ENABLE);
       if (resp == NULL) {
@@ -78,7 +86,9 @@ class GPSDClient {
     }
 
     void step() {
-
+	/**
+	 * read the gps data and call the function to process it
+	 */
       gps_data_t *p;
 #if GPSD_API_MAJOR_VERSION >= 5
       gps_read(p);
@@ -114,14 +124,18 @@ class GPSDClient {
   private:
     ros::NodeHandle node;
     ros::NodeHandle privnode;
-    ros::Publisher gps_fix_pub;
+    ros::Publisher gps_fix_pub; 
     ros::Publisher navsat_fix_pub;
-    gpsmm *gps;
+    gpsmm *gps; // variable that permits us to read gps data
     int gps_state;
 
     bool use_gps_time;
 
-    void process_data(struct gps_data_t* p) {
+    void process_data(struct gps_data_t* p) 
+	/**
+	 * filter the data if none or if the gps is offline, then call the process data function
+	 */
+	{
       if (p == NULL)
         return;
 
@@ -132,23 +146,26 @@ class GPSDClient {
       process_data_navsat(p);
     }
 
-#if GPSD_API_MAJOR_VERSION == 5
-#define SATS_VISIBLE p->satellites_visible
-#elif GPSD_API_MAJOR_VERSION == 4
+#if GPSD_API_MAJOR_VERSION >= 4
 #define SATS_VISIBLE p->satellites_visible
 #elif GPSD_API_MAJOR_VERSION == 3
 #define SATS_VISIBLE p->satellites
 #endif
 
-    void process_data_gps(struct gps_data_t* p) {
+    void process_data_gps(struct gps_data_t* p) 
+	/** 
+	 * Process the gps data and send the extended message version
+	 */
+	{
       ros::Time time = ros::Time::now();
 
-      GPSFix fix;
-      GPSStatus status;
+      GPSFix fix; //ros message
+      GPSStatus status; //ros message
 
       status.header.stamp = time;
       fix.header.stamp = time;
 
+	// fill in the gps status messages parameters, which is a parameter of the GPSFix message
       status.satellites_used = p->satellites_used;
 
       status.satellite_used_prn.resize(status.satellites_used);
@@ -177,6 +194,7 @@ class GPSDClient {
         if (p->status & STATUS_DGPS_FIX)
           status.status |= 18; // same here
 
+	// fill in all the fix messages parameters
         fix.time = p->fix.time;
         fix.latitude = p->fix.latitude;
         fix.longitude = p->fix.longitude;
@@ -216,7 +234,11 @@ class GPSDClient {
       gps_fix_pub.publish(fix);
     }
 
-    void process_data_navsat(struct gps_data_t* p) {
+    void process_data_navsat(struct gps_data_t* p) 
+	/** 
+	 * Process the gps data and send the short message version
+	 */
+{
       NavSatFixPtr fix(new NavSatFix);
 
       /* TODO: Support SBAS and other GBAS. */
@@ -277,7 +299,7 @@ int main(int argc, char ** argv) {
   updater.setHardwareIDf("GPS");
   updater.add("gps", &client, &GPSDClient::gps_diagnostic); //function that will be executed with updater.update()
 
-  if (!client.start())
+  if (!client.start()) // We stop the program if the gps did not initialize
   {
     updater.force_update();
     return -1;

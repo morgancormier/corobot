@@ -42,7 +42,9 @@
 #include <math.h>
 #include <QtGui>
 
-
+/**
+ * Display the wrist orientation by a pair of red lines. The lines can be moved to change the orientation of the wrist
+ */
 
 WristWidget::WristWidget(QWidget *parent)
     : QGraphicsView(parent), timerId(0)
@@ -82,6 +84,7 @@ WristWidget::WristWidget(QWidget *parent)
     line->setPen(QPen(Qt::red,WRIST_LINE_WIDTH));
     line2->setPen(QPen(Qt::red,WRIST_LINE_WIDTH));
 
+    // make the line be able to rotate around the origin point given as parameters
     line->setFlag(line->ItemIsMovable);
     line->setTransformOriginPoint(WRIST_CENTER_X, WRIST_CENTER_Y);
     scene->addItem(line);
@@ -133,9 +136,11 @@ void WristWidget::turnCounterClockwise()
 }
 
 void WristWidget::timerEvent(QTimerEvent *event)
+// get the new wrist angle if the user interacted with the widget
  {
      Q_UNUSED(event);
 
+     // get the lines from the scene and get the new angle if it has moved
      QList<Line  *> lines;
      foreach (QGraphicsItem  *item, scene()->items()) {
          if (Line  *l = qgraphicsitem_cast<Line  *>(item))
@@ -166,6 +171,7 @@ void WristWidget::timerEvent(QTimerEvent *event)
 
 
  void WristWidget::drawBackground(QPainter *painter, const QRectF &rect)
+// Draw the background white/ grey color plus the background lines
  {
      Q_UNUSED(rect);
 
@@ -197,16 +203,6 @@ void WristWidget::timerEvent(QTimerEvent *event)
                                      WRIST_CIRCLE_RADIUS * 2, WRIST_CIRCLE_RADIUS * 2,
                                      0, 360 * 64);
 
- }
-
- void WristWidget::scaleView(qreal scaleFactor)
- //scale the view
- {
-     qreal factor = transform().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
-     if (factor < 0.07 || factor > 100)
-         return;
-
-     scale(scaleFactor, scaleFactor);
  }
 
 

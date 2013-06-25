@@ -62,7 +62,7 @@ double MetersToPixels(const double meters)
     return (meters * PIXELS_PER_METER);
 }
 
-//Shoulder and Elbow width constant for different arms.
+//Shoulder and Elbow width constant for different arms. Some constants are not known so they are given a false value
 //Old corobot Arm
 const double COROBOT_ARM_SHOULDER_SEGMENT_METERS = inchesToMeters(6.25);
 const double COROBOT_ARM_ELBOW_SEGMENT_METERS = inchesToMeters(8);
@@ -83,12 +83,13 @@ const double AL5A_ARM_ELBOW_SEGMENT_METERS = inchesToMeters(7.62);
 double armShoulderSegmentMeters=COROBOT_ARM_SHOULDER_SEGMENT_METERS;
 double armElbowSegmentMeters=COROBOT_ARM_ELBOW_SEGMENT_METERS;
 
-//Constant related to the drawings
+//Constant related to the position of the arm in the widget
 const int ARM_X = 120;
 const int ARM_Y = 120;
 const int ARM_CENTER_X = ARM_X / 2;
 const int ARM_BODY_TOP = ARM_X * 7 / 10;
 const int ARM_SHOULDER_X = ARM_CENTER_X - ARM_X / 7;
+
 
 ArmWidget::ArmWidget(QWidget *parent)
     : QGraphicsView(parent), timerId(0)
@@ -109,9 +110,9 @@ ArmWidget::ArmWidget(QWidget *parent)
     setMinimumSize(210, 110);
     setWindowTitle(tr("Elastic Nodes"));
 
-    joint *joint1 = new joint(this);
-    joint *joint2 = new joint(this);
-    joint *joint3 = new joint(this);
+    joint *joint1 = new joint(this); // shoulder joint, fixed
+    joint *joint2 = new joint(this); // elbow joint, not fixed but not moveable directly
+    joint *joint3 = new joint(this); // gripper, moveable by the user
 
 
     scene->addItem(joint1);
@@ -131,9 +132,9 @@ ArmWidget::ArmWidget(QWidget *parent)
                    -MetersToPixels(y)-ARM_Y+ARM_BODY_TOP+5+this->sceneRect().bottom());
     end_effector = QPointF(0,0);
 
-    QGraphicsLineItem *line = new QGraphicsLineItem(joint1->pos().x()-5,joint1->pos().y()-5,joint2->pos().x()-5,joint2->pos().y()-5);
+    QGraphicsLineItem *line = new QGraphicsLineItem(joint1->pos().x()-5,joint1->pos().y()-5,joint2->pos().x()-5,joint2->pos().y()-5); //line between shoulder and elbow
     scene->addItem(line);
-    QGraphicsLineItem *line2 = new QGraphicsLineItem(joint2->pos().x()-5,joint2->pos().y()-5,joint3->pos().x()-5,joint3->pos().y()-5);
+    QGraphicsLineItem *line2 = new QGraphicsLineItem(joint2->pos().x()-5,joint2->pos().y()-5,joint3->pos().x()-5,joint3->pos().y()-5); // line between the elbow and the gripper
     scene->addItem(line2);
 
  }
@@ -232,7 +233,7 @@ void ArmWidget::Corobot(bool value)
 }
 
 void ArmWidget::setModel(bool arm_al5a,bool arm_pincher,bool arm_reactor,bool arm_old_corobot)
-// set the number of Degree of Freedom of the arm and therefore the dimensions and if the rotation of the arm should be controled or not
+// set the number of Degree of Freedom of the arm and therefore the dimensions.
 {
     if (arm_old_corobot)
     {
@@ -255,7 +256,7 @@ void ArmWidget::setModel(bool arm_al5a,bool arm_pincher,bool arm_reactor,bool ar
         armElbowSegmentMeters= AL5A_ARM_ELBOW_SEGMENT_METERS;
     }
 
-    printf("ARM_LENGTH %d, %d", armShoulderSegmentMeters, armShoulderSegmentMeters);
+    printf("ARM_LENGTH %f, %f", armShoulderSegmentMeters, armShoulderSegmentMeters);
 
     QGraphicsScene *scene = this->scene();
 
@@ -339,30 +340,17 @@ void ArmWidget::received_pos(double x, double y)
 
 
 void ArmWidget::timerEvent(QTimerEvent *event)
-//execute this function when the timer is up.
+//execute this function when the timer is up. the timer prevents impossible movements to the arm.
  {
      Q_UNUSED(event);
 
+	// get all the joints
      QList<joint *> joints;
          foreach (QGraphicsItem *item, scene()->items()) {
              if (joint *j = qgraphicsitem_cast<joint *>(item))
                  joints << j;
          }
 
-       //  foreach (joint *j, joints)
-         //   j->calculateForces();
-/*
-         bool itemsMoved = false;
-         foreach (joint *j, joints) {
-             if (j->advance())
-                 itemsMoved = true;
-         }
-
-         if (!itemsMoved) {
-             killTimer(timerId);
-       //      timerId = 0;
-         }
-       else{*/
 
          const double LINK_1_LENGTH = MetersToPixels(armShoulderSegmentMeters);
          const double LINK_2_LENGTH = MetersToPixels(armElbowSegmentMeters);
@@ -372,11 +360,9 @@ void ArmWidget::timerEvent(QTimerEvent *event)
              x = PixeltoMeter(joints.at(2)->pos().x()-5-(this->sceneRect().left()+ARM_SHOULDER_X));
              y = PixeltoMeter(this->sceneRect().bottom()-ARM_Y+ARM_BODY_TOP-joints.at(2)->pos().y()+5);
 
-         if(joints.at(2)->x()!=end_effector.x() || joints.at(2)->y()!=end_effector.y()){
+         if(joints.at(2)->x()!=end_effector.x() || joints.at(2)->y()!=end_effector.y()){ // if the gripper moved
              double t1,t2;
-             if(doArmIK(x,y, t1, t2)){
-
-            //emit posarm(x,y);
+             if(doArmIK(x,y, t1, t2)){ // do the inverse kinematic with the new gripper position
 
             double x = LINK_1_LENGTH * cos(t1);
             double y = LINK_1_LENGTH * sin(t1);
@@ -384,7 +370,7 @@ void ArmWidget::timerEvent(QTimerEvent *event)
             int elbowX = ARM_SHOULDER_X + (int)x;
             int elbowY = -ARM_Y+ARM_BODY_TOP - (int)y;
 
-            joints.at(1)->setPos(this->sceneRect().left()+elbowX+5, this->sceneRect().bottom()+elbowY+5);
+            joints.at(1)->setPos(this->sceneRect().left()+elbowX+5, this->sceneRect().bottom()+elbowY+5); // set the position to the elbow
 
 
             if(shoulder)
@@ -395,9 +381,11 @@ void ArmWidget::timerEvent(QTimerEvent *event)
                 emit theta2(t2/M_PI*180+180);
             else
                 emit theta2(t2 + M_PI);
+
 	    emit shoulderAngle_rad(t1);
 	    emit elbowAngle_rad(-t2);
 	
+		// Draw the arm lines 
                  QList<QGraphicsLineItem *> lines;
                      foreach (QGraphicsItem *item, scene()->items()) {
                          if (QGraphicsLineItem *l = qgraphicsitem_cast<QGraphicsLineItem *>(item))
@@ -462,17 +450,3 @@ void ArmWidget::timerEvent(QTimerEvent *event)
      painter->setPen(Qt::lightGray);
      painter->setPen(Qt::black);
  }
-
- void ArmWidget::scaleView(qreal scaleFactor)
- //scale the view
- {
-     qreal factor = transform().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
-     if (factor < 0.07 || factor > 100)
-         return;
-
-     scale(scaleFactor, scaleFactor);
- }
-
-//bool arm_reset()
-//{
-//}

@@ -11,18 +11,17 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     Q_INIT_RESOURCE(images);
 
+    // Show a loading screen, I am not sure this is showed even on slow computers...
     QSplashScreen *splash = new QSplashScreen;
-
     splash->setPixmap(QPixmap("../resources/images/splash.jpg"));
-    //sleep(1.5);
     splash->show();
     splash->showMessage(QObject::tr("ROS GUI is launching...."),Qt::AlignBottom,Qt::black);
-    //ssleep(1);
 
+    //Make the main window appear
     MainWindow w;
-
     w.show();
 
+    // The main window is fully loaded, we can now delete the splash screen
     splash->finish(&w);
     delete splash;
 

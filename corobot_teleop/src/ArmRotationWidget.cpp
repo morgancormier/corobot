@@ -71,13 +71,13 @@ ArmRotationWidget::ArmRotationWidget(QWidget *parent)
     setMinimumSize(210, 110);
     setWindowTitle(tr("Elastic Nodes"));
 
-    joint *joint1 = new joint(this);
-    joint *joint2 = new joint(this);
+    joint *joint1 = new joint(this); // this is the shoulder joint, which is actually fixed in this widget
+    joint *joint2 = new joint(this); // this this the gripper in the widget, which can be moved by the user
 
     scene->addItem(joint1);
     scene->addItem(joint2);
 
-    joint2->setFlag(joint2->ItemIsMovable);
+    joint2->setFlag(joint2->ItemIsMovable); // Make the gripper moveable
 
 
     joint1->setPos(this->sceneRect().right()/2 + 5, this->sceneRect().bottom()-10 - LENGTH_ROBOT * 4/5 +5);
@@ -85,7 +85,7 @@ ArmRotationWidget::ArmRotationWidget(QWidget *parent)
 
     end_effector = QPointF(0,0);
 
-    QGraphicsLineItem *line = new QGraphicsLineItem(joint1->pos().x()-5,joint1->pos().y()-5,joint2->pos().x()-5,joint2->pos().y()-5);
+    QGraphicsLineItem *line = new QGraphicsLineItem(joint1->pos().x()-5,joint1->pos().y()-5,joint2->pos().x()-5,joint2->pos().y()-5); // draw the line between the two joints, representing the arm itself
     scene->addItem(line);
 
  }
@@ -115,39 +115,43 @@ void ArmRotationWidget::moveArmRight()
 
 void ArmRotationWidget::timerEvent(QTimerEvent *event)
 //execute this function when the timer is up.
+// Use to restrict the movement of the rotation of the arm the way it should be. 
  {
      Q_UNUSED(event);
      double angle;
 
+	// get the two joints from the scene, the shoulder and the gripper
      QList<joint *> joints;
          foreach (QGraphicsItem *item, scene()->items()) {
              if (joint *j = qgraphicsitem_cast<joint *>(item))
                  joints << j;
          }
 
-
+	// if the gripper joint moved
          if(joints.at(1)->x()!=end_effector.x() || joints.at(1)->y()!=end_effector.y()){
              double t1,t2;
+		// get the difference of position between the shoulder and gripper
 	     double x = joints.at(0)->x() - joints.at(1)->x();
 	     double y = joints.at(0)->y() - joints.at(1)->y();
 		
+		// reset the position of the gripper to where it should be to keep the fixed arm length. The angle stay the same as what the user defined.
 	     if(y > 0)
 	     {
 	     	angle = atan(x/y) + M_PI/2;
 		joints.at(1)->setPos(this->sceneRect().right()/2 + 5 + cos(angle)*SIZE_ARM, this->sceneRect().bottom()-10 - LENGTH_ROBOT * 4/5 +5 - sin(angle)*SIZE_ARM);
 		emit armAngle_rad(angle);
 	     }
-	     else
+	     else // the arm went passed the 180 angles, so we restrict the arm from going further.
 		joints.at(1)->setPos(end_effector);
 
-
+		// draw the arm line again
              QList<QGraphicsLineItem *> lines;
              foreach (QGraphicsItem *item, scene()->items()) {
              	if (QGraphicsLineItem *l = qgraphicsitem_cast<QGraphicsLineItem *>(item))
                 	lines << l;
              }
 
- 	     lines.at(0)->setLine(joints.at(0)->pos().x()-5,joints.at(0)->pos().y()-5,joints.at(1)->pos().x()-5,joints.at(1)->pos().y()-5);
+ 	     lines.at(0)->setLine(joints.at(0)->pos().x()-5,joints.at(0)->pos().y()-5,joints.at(1)->pos().x()-5,joints.at(1)->pos().y()-5); 
 
              end_effector = joints.at(1)->pos();
          }
@@ -198,12 +202,3 @@ void ArmRotationWidget::timerEvent(QTimerEvent *event)
      painter->setPen(Qt::black);
  }
 
- void ArmRotationWidget::scaleView(qreal scaleFactor)
- //scale the view
- {
-     qreal factor = transform().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
-     if (factor < 0.07 || factor > 100)
-         return;
-
-     scale(scaleFactor, scaleFactor);
- }

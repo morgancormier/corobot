@@ -42,6 +42,11 @@
 
 #include <QtGui>
 
+/** Constant used for the position of items on the widget window
+ * As of now the widget displays two red lines representing the gripper and its state, plus a background. The lines are not moveable. 
+ * Maybe the widget can be improved in the future, since as of now it is not very useful
+ */
+
 const int GRIPPER_X = 48;
 const int GRIPPER_Y = 48;
 const int GRIPPER_CENTER_X = GRIPPER_X / 2;
@@ -168,14 +173,5 @@ void GripperWidget::timerEvent(QTimerEvent *event)
                               0, 360 * 64);
  }
 
- void GripperWidget::scaleView(qreal scaleFactor)
- //scale the view
- {
-     qreal factor = transform().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
-     if (factor < 0.07 || factor > 100)
-         return;
-
-     scale(scaleFactor, scaleFactor);
- }
 
 

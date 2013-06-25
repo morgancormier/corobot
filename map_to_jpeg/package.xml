@@ -4,7 +4,7 @@
   <version>1.0.0</version>
   <description>
 
-     Package based on the package hector_compressed_map_transport. It provides means for transporting compressed map data through the use of image_transport. The difference with hector_compressed_map_transport is that the position and orientation of the robot is displayed on the map.
+     Package based on the package hector_compressed_map_transport and improved upon. It provides means for transporting compressed map data through the use of image_transport. The difference with hector_compressed_map_transport is that the position and orientation of the robot is displayed on the map. It also adds a mean to convert the jpeg representation of the map back to a map.
 
   </description>
 

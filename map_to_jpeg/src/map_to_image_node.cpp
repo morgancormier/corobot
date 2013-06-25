@@ -159,7 +159,7 @@ public:
         }
       }
 
-      image_transport_publisher_full_.publish(cv_img_full_.toImageMsg());
+      image_transport_publisher_full_.publish(cv_img_full_.toImageMsg()); // publish the image representating the full map without the position of the robot
 
       world_map_transformer_.setTransforms(*map);
 
@@ -168,12 +168,14 @@ public:
 
       Eigen::Vector2i rob_position_mapi (rob_position_map.cast<int>());
 
+	//draw the position of the robot on the map
+
 	double yaw = tf::getYaw(pose_ptr_->pose.orientation);
 	double radius = size_x / 100;
 	circle(*map_mat_position, cvPoint(rob_position_mapi[0],size_y - rob_position_mapi[1]), radius, Scalar(255,0,0),3);
 	line(*map_mat_position, cvPoint(rob_position_mapi[0],size_y - rob_position_mapi[1]), cvPoint(rob_position_mapi[0] + radius*cos(yaw),size_y - rob_position_mapi[1] - radius * sin(yaw)), Scalar(255,0,0),3);
 
-        image_transport_publisher_full_position_.publish(cv_img_full_with_position_.toImageMsg());
+        image_transport_publisher_full_position_.publish(cv_img_full_with_position_.toImageMsg()); // publish the image with position
     }
 
     // Only if someone is subscribed to it, do work and publish tile-based map image Also check if pose_ptr_ is valid

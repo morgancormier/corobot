@@ -1,6 +1,5 @@
 #include "ros/ros.h"
 #include "ssc32.hpp"
-#include "corobot_msgs/ssc32_info.h"
 #include "corobot_msgs/MotorCommand.h"
 #include "corobot_msgs/ServoPosition.h"
 #include <math.h>
@@ -8,7 +7,7 @@
 #include <sys/stat.h>
 
 
-using namespace Servo;
+using namespace Servo; 
 
 SSC32 m_ssc32;
 
@@ -21,6 +20,7 @@ bool first_time_command[20] = {false};
 
 
 void timerCallback(const ros::TimerEvent&)
+// stop the motors after the requested time
 {
 	m_ssc32.SendMessage(1,0,0);
 	m_ssc32.SendMessage(0,0,0);
@@ -28,6 +28,7 @@ void timerCallback(const ros::TimerEvent&)
 
 void SetSpeedTopic(const corobot_msgs::MotorCommand::ConstPtr &msg)
 {
+// set the motors requested speed. 
 	ros::NodeHandle n;
 	m_ssc32.SendMessage(1,(msg->leftSpeed*-5)+1500,(100-msg->acceleration)*10);
 	m_ssc32.SendMessage(0,(msg->rightSpeed*-5)+1500,(100-msg->acceleration)*10);
@@ -36,7 +37,7 @@ void SetSpeedTopic(const corobot_msgs::MotorCommand::ConstPtr &msg)
 
 
 /**
- * @brief Callback for the topic /phidgetServo_setPosition
+ * @brief Callback for the topic /setPositionServo
 	  The position of the concerned servo motor is set each time a message is received on this topic.
  * @param corobot_msgs::ServoPosition Message
  */ 
@@ -66,8 +67,6 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "ssc32_node");
 	ros::NodeHandle n("~");
 
-	//Advertise topics
-	ros::Publisher ssc32_info_pub = n.advertise<corobot_msgs::ssc32_info>("ssc32_info", 1000);
 
 	//Subscribe to topics
 	ros::Subscriber velocity=n.subscribe<corobot_msgs::MotorCommand>("/ssc32_velocity",1000, SetSpeedTopic);
@@ -82,7 +81,7 @@ int main(int argc, char **argv)
 
 	SSC32_PORT = ssc32_port_;
 
-	// Let's give permission to do anything on the ssc32 port, or else we won't be able to use it.
+	// Let's give permission to do anything on the ssc32 port, or else we won't be able to use it. Commented because the node would need to be executed in super user. 
 	/*char mode[] = "0777";
     	int i;
     	i = strtol(mode, 0, 8);
@@ -97,9 +96,6 @@ int main(int argc, char **argv)
 	if(m_ssc32.startSerial(SSC32_PORT))
 	{
 	  ROS_INFO("Success!!! Connect to serial port");
-	  corobot_msgs::ssc32_info info;
-	  info.connected = 1;
-	  ssc32_info_pub.publish(info);
 	}
 
 	//main ros function

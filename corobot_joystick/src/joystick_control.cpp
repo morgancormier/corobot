@@ -4,7 +4,7 @@
 #include <corobot_msgs/MotorCommand.h>
 #include <corobot_msgs/takepic.h>
 #include <corobot_msgs/PanTilt.h>
-#include <corobot_msgs/velocityValue.h>
+#include <std_msgs/Int32.h>
 
 #include <math.h>
 
@@ -16,14 +16,13 @@ ros::Publisher driveControl_pub,takepic_pub,pan_tilt_control, move_arm_pub;
 int speed_left, speed_right, speed_value;
 bool turningLeft, turningRight;
 int pan_value,tilt_value;
-double orx;
-double ory,orz;
+double ory, orz, orx;
 int gripper_state; //0 = open, 1 = closed
 int save_image_state = 0;
 
-void velocityCallback(const velocityValue::ConstPtr& msg)
+void velocityCallback(const std_msgs::Int32::ConstPtr& msg)
 {
-	speed_value = msg->velocity;
+	speed_value = msg->data;
 }
 void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
@@ -267,28 +266,6 @@ if(joy->axes[4]>0.5) // Shoulder control
 
   }
 
-//*****************************************************
-  //if(joy->axes[1]>0)
-  //{twist.linear.x = speed;twist.angular.z = 1;} // Go Foward
-
-  //if(joy->axes[1]<0)
-  //{twist.linear.x = -1*speed;twist.angular.z = -1;} // Go Backward
-
-  //if((joy->buttons[0]==1)&&(joy->buttons[1]==0)&&(joy->buttons[2]==0)&&(joy->buttons[3]==0)&&(joy->buttons[4]==0))
-  //{twist.linear.x = 0;twist.angular.z = 0;}//stop
-
-  //if((joy->buttons[0]==0)&&(joy->buttons[1]==0)&&(joy->buttons[2]==0)&&(joy->buttons[3]==1)&&(joy->buttons[4]==0)&&(joy->axes[1]==0))
-  //{twist.linear.x = 0;twist.angular.z = 1;}//turn left (constant speed)
-
-  //if((joy->buttons[0]==0)&&(joy->buttons[1]==0)&&(joy->buttons[2]==0)&&(joy->buttons[3]==0)&&(joy->buttons[4]==1)&&(joy->axes[1]==0))
-  //{twist.linear.x = 0;twist.angular.z = -1;}//turn right
- 
-  //if((joy->buttons[0]==0)&&(joy->buttons[1]==1)&&(joy->buttons[2]==0)&&(joy->buttons[3]==0)&&(joy->buttons[4]==0)&&(joy->axes[1]==0))
-  //{speed = speed - 0.05;} //decrease speed
-
-  //if((joy->buttons[0]==0)&&(joy->buttons[1]==0)&&(joy->buttons[2]==1)&&(joy->buttons[3]==0)&&(joy->buttons[4]==0)&&(joy->axes[1]==0))
-  //{speed = speed + 0.05;} //decrease speed
-
 }
 
 
@@ -310,16 +287,15 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "corobot_joystick");
   
   ros::NodeHandle n;
- 
-  /*ros::Subscriber sub = n.subscribe<joy::Joy>("joy", 1000, joyCallback);*/
 
+// Advertize topics used to control the robot
   driveControl_pub = n.advertise<corobot_msgs::MotorCommand>("PhidgetMotor", 100);
   takepic_pub = n.advertise<takepic>("takepicture",100);
   pan_tilt_control = n.advertise<PanTilt>("pantilt",10);
   move_arm_pub = n.advertise<MoveArm>("armPosition",10);
 
   ros::Subscriber sub = n.subscribe<sensor_msgs::Joy>("joy", 1000, joyCallback);
-  ros::Subscriber velocity = n.subscribe<velocityValue>("velocityValue", 1000, velocityCallback);
+  ros::Subscriber velocity = n.subscribe<std_msgs::Int32>("velocityValue", 1000, velocityCallback); //choose the maximum speed for the robot. value is between 0 and 100, 100 beeing the fastest possible
 
   ros::spin();
 }

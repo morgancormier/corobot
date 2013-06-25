@@ -3,48 +3,33 @@
 // view a copy of this license, visit http://creativecommons.org/licenses/by/2.5/ca/
 
 
-
 #include "ros/ros.h"
+#include "orientation.h"
 #include <stdio.h>
 #include "corobot_msgs/PosMsg.h"
 #include "corobot_msgs/PowerMsg.h"
-#include "corobot_msgs/IrMsg.h"
-#include "corobot_msgs/BumperMsg.h"
-#include "corobot_msgs/GripperMsg.h"
-#include "corobot_msgs/phidget_info.h"
-#include "corobot_msgs/spatial.h"
-#include "corobot_msgs/RangeSensor.h"
+#include "corobot_msgs/SensorMsg.h"
+#include "sensor_msgs/MagneticField.h"
 #include "sensor_msgs/Imu.h"
 #include <phidget21.h>
 #include <tf/transform_datatypes.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
 
-#define GRAVITY 9.81
-
 CPhidgetEncoderHandle m_rightEncoder;
 CPhidgetEncoderHandle m_leftEncoder;
 CPhidgetInterfaceKitHandle ifKit = 0;
 CPhidgetSpatialHandle spatial = 0;
 
-int  analog_inputs_value [8] = {0,0,0,0,0,0,0,0};
-char digital_inputs_value = 0;
-float acc [3] = {0,0,0};
-float ang [3] = {0,0,0};
-float mag [3] = {0,0,0};
+Orientation orientation_calculation;
 
-bool m_encoder1Seen=false, m_encoder2Seen=false,m_encodersGood = false;//usefull to set up the phidget
-bool m_validAnalogs = false,m_validDigitals=false; //tells if we received any data from the phidget or not.
+bool m_encoder1Seen=false, m_encoder2Seen=false,m_encodersGood = false;//useful to set up the phidget
 int m_leftEncoderNumber,m_rightEncoderNumber;
 
 bool m_rearBumperPresent = false; // tells if the rear Bumper is present on the robot or not.
 bool sonarsPresent = false; //tells if some sonars are connected
 
-bool phidget888_connected, phidget_encoder_connected;
-
-bool spatial_good = false;
-
-ros::Publisher posdata_pub,powerdata_pub,irData_pub,bumper_pub,gripper_pub,spatial_pub, imu_pub, sonar_pub; //topics where we want to publish to
+ros::Publisher posdata_pub,powerdata_pub,irData_pub,bumper_pub,spatial_pub, imu_pub, mag_pub, sonar_pub, other_pub; //topics where we want to publish to
 
 int bwOutput = -1; //Output bw for the sonars. -1 if no sonars are present
 int strobeOutput = -1; //Output strobe for the sonars. -1 if no sonars are present
@@ -53,62 +38,19 @@ int firstSonarInput = -1; //first input index for the sonars. -1 if no sonars ar
 int batteryPort = 0;
 int irFrontPort = 1;
 int irBackPort = 2;
-int gripperPort = 3;
 
 bool motors_inverted; //specify if the wiring of the robot (motors + encoders) has been inverted
 bool encoders_inverted; //specify if the wiring of the encoders has been inverted
 
-int interfaceKitError = 0, spatialError = 0, encoderError = 0;
+int interfaceKitError = 0, spatialError = 0, encoderError = 0; //for diagnostics purpose
+
 
 int RightEncoderAttach(CPhidgetHandle phid, void *userPtr);
-int LeftEncoderAttach(CPhidgetHandle phid, void *userPtr);
 
-double dCMMatrix[3][3]; //Matrix essential for calculating the orientation with IMU data
-int timestampPreviousCall; //timestamp of the measurement got at the last call of the function
-double pitchOffset; //offset necessary go from angle in the intial device position coordinate system to the User coordinate system
-double rollOffset; //offset necessary go from angle in the intial device position coordinate system to the User coordinate system
-double gravity[3]; //We save the gravity to know if the gravity we got is different from before or not
-double proportionalVector[3];//Proportional correction
-double integratorVector[3];//Omega Integrator
-double gyroscopeVectorCorrected[3]; //Corrected GyroVector data
-double kpRollpitch = 0.015; //Used in a PID controller to calculate the roll and pitch angles
-double kiRollpitch = 0.000010; //Used in a PID controller to calculate the roll and pitch angles
-double gravityEpsilon = 0.07;
-int validGravityCounter = 0; //Counter the number of valid gravity vector(valid in the sense that the norm is near 1) that follow each other
-int validAccelerationVectorsNecessaryToDetectGravity = 10;
-double lastGravityVectorDetected[3] = {0,0,0}; //save the value of the last gravity vector detected with the algorithm values
-
-
-int AttachHandler(CPhidgetHandle IFK, void *userptr)
-{
-	int serialNo;
-	const char *name;
-
-	CPhidget_getDeviceName(IFK, &name);
-	CPhidget_getSerialNumber(IFK, &serialNo);
-
-	printf("%s %10d attached!\n", name, serialNo);
-
-	return 0;
-}
-
-int DetachHandler(CPhidgetHandle IFK, void *userptr)
-{
-	int serialNo;
-	const char *name;
-
-	CPhidget_getDeviceName (IFK, &name);
-	CPhidget_getSerialNumber(IFK, &serialNo);
-
-	printf("%s %10d detached!\n", name, serialNo);
-
-	return 0;
-}
 
 int ErrorHandler(CPhidgetHandle IFK, void *userptr, int ErrorCode, const char *unknown)
 {
-	//printf("Error handled. %d - %s", ErrorCode, unknown);  //Do not print error info
-	printf("Error handled. %d - %s \n", ErrorCode, unknown);
+	ROS_ERROR("Error handled. %d - %s \n", ErrorCode, unknown);
 	return 0;
 }
 
@@ -222,58 +164,14 @@ static float irVoltageToDistance(float volts)
   return distanceInCm/100.0;
 }
 
-/** 
- * @Brief Voltage to distance function that is used for the sonar sensors
- * @param value value from 0 to 1000 representing a voltage value from 0 to vcc (5V)
- */
-static double sonarVoltageToMeters(int value)
-{
-	// The reported voltage is on the scale Vcc/512 per inch.
-	// Because we are using the phidget board, Vcc is always 5
-	const double vcc = 5.0;
-	double voltage = value * vcc / 1000.0;
-	double range_inches = voltage * 512 / vcc;
-
-	return range_inches * 2.54 / 100;
-}
 
 /**
- * @brief Publish the data on their corresponding topics
+ * @brief Publish the encoder data on the topic
  */
-int publish_data(){
+int publish_encoder(){
 
-    if(spatial_good)
-    {
-	corobot_msgs::spatial spatial;
-	sensor_msgs::Imu imu;
 
-	spatial.acc1 = acc[0];
-	spatial.acc2 = acc[1];
-	spatial.acc3 = acc[2];
-	spatial.ang1 = ang[0];
-	spatial.ang2 = ang[1];
-	spatial.ang3 = ang[2];
-	spatial.mag1 = mag[0];
-	spatial.mag2 = mag[1];
-	spatial.mag3 = mag[2];
-
-	imu.header.frame_id = "base_link";
-	imu.header.stamp = ros::Time::now();
-	imu.orientation = tf::createQuaternionMsgFromRollPitchYaw((atan2(dCMMatrix[2][1],dCMMatrix[2][2]) + rollOffset),(-asin(dCMMatrix[2][0]) + pitchOffset), (atan2(dCMMatrix[1][0],dCMMatrix[0][0])));
-	imu.angular_velocity.x = ang[0];
-	imu.angular_velocity.y = ang[1];
-	imu.angular_velocity.z = ang[2];
-	imu.linear_acceleration.x = acc[0];
-	imu.linear_acceleration.y = acc[1];
-	imu.linear_acceleration.z = acc[2];
-
-	spatial_pub.publish(spatial);
-	imu_pub.publish(imu);
-
-	spatialError = 0;
-    }
-
-    if(m_encodersGood) //the position is 4times the number of encoder counts.
+    if(m_encodersGood) //encoder data
     {
         corobot_msgs::PosMsg posdata;
 
@@ -320,490 +218,165 @@ int publish_data(){
     {
 	encoderError = 1;
     }
-    if (m_validAnalogs){
-        ////////////////////////////
-        // Update power data
-	if(batteryPort != -1)
-	{
-        	corobot_msgs::PowerMsg powerdata;
-        	powerdata.volts = (float) (analog_inputs_value[batteryPort] - 500) * 0.0734;
-		//The Min and Max present here are for the Nimh battery as it is the only one type of battery sold with a Corobot at the moment
-		powerdata.min_volt = 10.0;
-		powerdata.max_volt = 14.2;
-        	powerdata_pub.publish(powerdata);
-	}
-
-        ////////////////////////////
-        // Update IR data
-	if(irFrontPort != -1 || irBackPort != -1)
-	{
-        	corobot_msgs::IrMsg irData;
-		if(irFrontPort != -1)
-			irData.voltage1=(float) analog_inputs_value[irFrontPort]  / 200.0;
-		else
-			irData.voltage1=0;
-		if(irBackPort != -1)
-			irData.voltage2=(float) analog_inputs_value[irBackPort]  / 200.0;
-		else
-			irData.voltage2=0;
-		irData.range1=irVoltageToDistance(irData.voltage1);
-		irData.range2=irVoltageToDistance(irData.voltage2);
-		irData_pub.publish(irData);
-	}
-
-	if(gripperPort != -1)
-	{
-		corobot_msgs::GripperMsg gripperData;  // Gripper connect to the 4th analog input port?
-		gripperData.state=analog_inputs_value[gripperPort];
-		gripper_pub.publish(gripperData);
-	}
-	interfaceKitError = 0;
-    }
-
-    if (m_validDigitals)
-      {
-        ////////////////////////////
-        // Update the bumper data
-        corobot_msgs::BumperMsg bumper_data;
-
-        if (m_rearBumperPresent)
-          {
-            bumper_data.bumpers_count=4;
-            bumper_data.value0=(digital_inputs_value) & (0x01<<0);
-            bumper_data.value1=(digital_inputs_value) & (0x01<<1);
-            bumper_data.value2=(digital_inputs_value) & (0x01<<2);
-            bumper_data.value3=(digital_inputs_value) & (0x01<<3);
-          } 
-	else {
-          bumper_data.bumpers_count=2;
-          bumper_data.value0=(digital_inputs_value) & (0x01<<0);
-          bumper_data.value1=(digital_inputs_value) & (0x01<<1);
-        }
-
-        bumper_pub.publish(bumper_data);
-	interfaceKitError = 0;
-
-      }
 
     return 0;
 }
 
-/** @brief Function that will manage the sonars and acquire their data
- * this function is called every around 50ms
+/** 
+ * @Brief Voltage to distance function that is used for the sonar sensors
+ * @param value value from 0 to 1000 representing a voltage value from 0 to vcc (5V)
+ */
+static double sonarVoltageToMeters(int value)
+{
+	// The reported voltage is on the scale Vcc/512 per inch.
+	// Because we are using the phidget board, Vcc is always 5
+	const double vcc = 5.0;
+	double voltage = value * vcc / 1000.0;
+	double range_inches = voltage * 512 / vcc;
+    
+	return range_inches * 2.54 / 100;
+}
+
+/** @brief Function that will use use the sonar to later acquire their value
  */
 int sendSonarResult()
 {
-	corobot_msgs::RangeSensor data;
-	data.type = data.ULTRASOUND;
-	data.numberSensors = lastSonarInput + 1 - firstSonarInput;	
-
+	
 	CPhidgetInterfaceKit_setOutputState(ifKit, strobeOutput, 1);
 	ros::Duration(0.002).sleep(); // sleep for 2ms
 	CPhidgetInterfaceKit_setOutputState(ifKit, strobeOutput, 0);
-
-	//Acquire the data and transform them into values in meters
-	for(int i = firstSonarInput; i<= lastSonarInput;i++)
-	{
-		data.range.push_back(sonarVoltageToMeters(analog_inputs_value[i]));
-	}
-	 sonar_pub.publish(data);
-	return 0;
 }
 
 
 /** @brief callback that will run if an input changes.
  * Index - Index of the input that generated the event, State - boolean (0 or 1) representing the input state (on or off)
  */
-int InputChangeHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, int State)
-{
-	printf("Digital Input: %d > State: %d\n", Index, State);
+int DigitalInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, int State)
+{   	 
+	corobot_msgs::SensorMsg msg;
+    	msg.value = ((State == PTRUE)?1:0);
+    	msg.index = Index;
 
- 	if(State==PTRUE)
-       	  digital_inputs_value = digital_inputs_value|(0x01<<Index);
-    	else if(State == PFALSE)
-     	  digital_inputs_value = digital_inputs_value&(~(0x01<<Index));
-   	 m_validDigitals = true;
-  
-	return 0;
-}
+	if (Index <= 3 && m_rearBumperPresent == true) //Bumper sensor, front or rear
+	{
+        	msg.type = msg.BUMPER;
+		bumper_pub.publish(msg);
+	}
+	else if (Index <= 1) //Bumper sensor, front 
+	{
+		msg.type = msg.BUMPER;
+		bumper_pub.publish(msg);
+	}
+	else // we don't know what it is but we publish
+	{
+		msg.type = msg.OTHER;
+		other_pub.publish(msg);
+	}
+        
 
-//callback that will run if an output changes.
-//Index - Index of the output that generated the event, State - boolean (0 or 1) representing the output state (on or off)
-int OutputChangeHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, int State)
-{
-	printf("Digital Output: %d > State: %d\n", Index, State);
+	interfaceKitError = 0;
 	return 0;
 }
 
 //callback that will run if the sensor value changes by more than the OnSensorChange trigger.
 //Index - Index of the sensor that generated the event, Value - the sensor read value
-int SensorChangeHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, int Value)
+int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, int Value)
 {
-	printf("Sensor: %d > Value: %d\n", Index, Value);
-
 	//sensorValue 0-1000 ==> 0-5V
 
-    	analog_inputs_value[Index]=Value;      //SEGMENTATION FAULT!!
 
-   	m_validAnalogs = true;
+        
+    if(batteryPort == Index) //// Update power data
+    {
+        corobot_msgs::PowerMsg powerdata;
+        powerdata.volts = (float) (Value - 500) * 0.0734;
+        //The Min and Max present here are for the Nimh battery as it is the only one type of battery sold with a Corobot at the moment
+        powerdata.min_volt = 10.0;
+        powerdata.max_volt = 14.2;
+        powerdata_pub.publish(powerdata);
+    }
 
+    else if(irFrontPort == Index) // Update IR data
+    {
+	corobot_msgs::SensorMsg data;
+	data.type = data.INFRARED_FRONT;
+	data.index = Index;
+
+        data.value = irVoltageToDistance((float) Value  / 200.0);	
+        irData_pub.publish(data);
+    }
+        
+    else if(irBackPort == Index) // Update IR data
+    {
+        corobot_msgs::SensorMsg data;
+        data.type = data.INFRARED_REAR;
+        data.index = Index;
+        
+        data.value = irVoltageToDistance((float) Value  / 200.0);
+	irData_pub.publish(data);
+    }
+    else if(Index >= firstSonarInput && Index <= lastSonarInput)//sonar
+    {
+	corobot_msgs::SensorMsg data;
+        data.type = data.ULTRASOUND;
+        data.index = Index;
+        
+        data.value = sonarVoltageToMeters((float) Value  / 200.0);
+	sonar_pub.publish(data);
+    }
+    
+    else // We don't know what sensor it is, but we publish
+    {
+        corobot_msgs::SensorMsg data;
+	data.type = data.OTHER;
+    	data.value = Value;
+    	data.index = Index;
+        other_pub.publish(data);
+    }
+    
+    
+	interfaceKitError = 0;
 	return 0;
 }
 
-void vectorScale(double vectorOut[3],double vectorIn[3], double scale2)
-{
-    for(int c=0; c<3; c++)
-    {
-        vectorOut[c]=vectorIn[c]*scale2; 
-    }
-}
 
-
-
-void vectorCrossProduct(double vectorOut[3], double vectorIn1[3],double vectorIn2[3])
-{
-    vectorOut[0]= (vectorIn1[1]*vectorIn2[2]) - (vectorIn1[2]*vectorIn2[1]);
-    vectorOut[1]= (vectorIn1[2]*vectorIn2[0]) - (vectorIn1[0]*vectorIn2[2]);
-    vectorOut[2]= (vectorIn1[0]*vectorIn2[1]) - (vectorIn1[1]*vectorIn2[0]);
-}
-
-void vectorAddition(double vectorOut[3],double vectorIn1[3], double vectorIn2[3])
-{
-    for(int c=0; c<3; c++)
-    {
-        vectorOut[c]=vectorIn1[c]+vectorIn2[c];
-    }
-}
-
-void matrixMultiply(double MatrixOut[3][3],double MatrixIn1[3][3], double MatrixIn2[3][3])
-{
-    double op[3]; 
-    for(int x=0; x<3; x++)
-    {
-        for(int y=0; y<3; y++)
-        {
-            for(int w=0; w<3; w++)
-            {
-                op[w]=MatrixIn1[x][w]*MatrixIn2[w][y];
-            } 
-            MatrixOut[x][y]=0;
-            MatrixOut[x][y]=op[0]+op[1]+op[2];
-            
-        }
-    }
-}
-
-double ToRad(double value)
-{
-    return value*0.01745329252;  // *pi/180
-}
-
-double vectorDotProduct(double vector1[3],double vector2[3])
-{
-    double op=0;
-    
-    for(int c=0; c<3; c++)
-    {
-        op+=vector1[c]*vector2[c];
-    }
-    
-    return op; 
-}
-
-double constrain(double value, double min, double max)
-{
-    if((value>=min) && (value<= max))
-        return value;
-    else if(value<min)
-        return min;
-    else //a>max
-        return max;
-}
-
-bool isEqual(double vector1[3], double vector2[3])
-{
-    if(abs(vector1[0] - (vector2[0]/GRAVITY) + vector1[1] - (vector2[1]/GRAVITY) + vector1[2] - (vector2[2]/GRAVITY))>0.0001)
-        return false;
-    else
-        return true;
-}
-
-// Update the dCM matrix to caculate the orientation
-void AnglesMatrixUpdate(float gyroscopeVector[3], int gyroscopeTimestamp)
-{
-
-    
-    double period;
-        if(timestampPreviousCall==0) 
-            period = 0;
-        else
-            period = (gyroscopeTimestamp - timestampPreviousCall); //time in seconds between the two last measures we got
-    
-    double temporaryVector[3]= {0,0,0};
-    double updateMatrix[3][3]; //temporary matrix we use to update the dCMMatrix
-    double temporaryMatrix[3][3];
-    double gyroscopeVectorInvertedSystem[3]; //We call here Inverted System the Device coordinate system with Dx = Dy and Dy = Dx( the axis are exchanged)
-    
-    
-    /****** We have to Exchange the x and y value of our vector to correspond with the system used by the algorithm *******/
-    gyroscopeVectorInvertedSystem[0] =  gyroscopeVector[1];
-    gyroscopeVectorInvertedSystem[1] =  gyroscopeVector[0];
-    gyroscopeVectorInvertedSystem[2] =  gyroscopeVector[2];
-    
-    
-    
-    /******Calculate the GyroscopeVectorCorrected which is the gyroscope vector measure plus some vectors we get with the drift correction ( corresponding to the PID of the algorithm ********/
-    vectorAddition(temporaryVector, gyroscopeVectorInvertedSystem, integratorVector);  //adding proportional term
-    vectorAddition(gyroscopeVectorCorrected, temporaryVector, proportionalVector); //adding Integrator term
-    
-    
-    /******We calculate the changement that the new measurement will imply*******/
-    updateMatrix[0][0]=0;
-    updateMatrix[0][1]=-period*gyroscopeVectorCorrected[2];
-    updateMatrix[0][2]=period*gyroscopeVectorCorrected[1];
-    updateMatrix[1][0]=period*gyroscopeVectorCorrected[2];
-    updateMatrix[1][1]=0;
-    updateMatrix[1][2]=-period*gyroscopeVectorCorrected[0];
-    updateMatrix[2][0]=-period*gyroscopeVectorCorrected[1];
-    updateMatrix[2][1]=period*gyroscopeVectorCorrected[0];
-    updateMatrix[2][2]=0;
-    
-    
-    
-    /******We update the DCM Matrix *******/
-    matrixMultiply(temporaryMatrix,dCMMatrix, updateMatrix); 
-    
-    for(int x=0; x<3; x++) //Matrix Addition (update)
-    {
-        for(int y=0; y<3; y++)
-        {
-            dCMMatrix[x][y]+=temporaryMatrix[x][y];
-        } 
-    }
-    
-    timestampPreviousCall = gyroscopeTimestamp;
-    
-}
-
-//Normalize thed DCM matrix to caculate the orientation
-void AnglesNormalize()
-{
-    double error=0;
-    double temporaryMatrix[3][3];
-    double vectorNorm=0;
-    bool problem=false;
-    
-    /*******We want to make sure that the rows of our DCM Matrix are orthogonal. If not, we make them orthogonal.*******/
-    
-    error= -vectorDotProduct(dCMMatrix[0],dCMMatrix[1])*.5f; //eq.19
-    
-    vectorScale(temporaryMatrix[0], dCMMatrix[1], error); //eq.19
-    vectorScale(temporaryMatrix[1], dCMMatrix[0], error); //eq.19
-    
-    vectorAddition(temporaryMatrix[0], temporaryMatrix[0], dCMMatrix[0]);//eq.19
-    vectorAddition(temporaryMatrix[1], temporaryMatrix[1], dCMMatrix[1]);//eq.19
-    
-    vectorCrossProduct(temporaryMatrix[2],temporaryMatrix[0],temporaryMatrix[1]);  //eq.20
-    
-    
-    /******We make sure that the norm of our vector is 1*******/
-    
-    vectorNorm= vectorDotProduct(temporaryMatrix[0],temporaryMatrix[0]); 
-    if (vectorNorm < 1.5625f && vectorNorm > 0.64f) {
-        vectorNorm= .5f * (3-vectorNorm);                                                 //eq.21
-    } else if (vectorNorm < 100.0f && vectorNorm > 0.01f) {
-        vectorNorm= 1. / sqrt(vectorNorm);
-    } else {
-        problem = true;
-    }
-    vectorScale(dCMMatrix[0], temporaryMatrix[0], vectorNorm);
-    
-    vectorNorm= vectorDotProduct(temporaryMatrix[1],temporaryMatrix[1]); 
-    if (vectorNorm < 1.5625f && vectorNorm > 0.64f) {
-        vectorNorm= .5f * (3-vectorNorm);                                                 //eq.21
-    } else if (vectorNorm < 100.0f && vectorNorm > 0.01f) {
-        vectorNorm= 1. / sqrt(vectorNorm);  
-    } else {
-        problem = true;
-    }
-    vectorScale(dCMMatrix[1], temporaryMatrix[1], vectorNorm);
-    
-    vectorNorm= vectorDotProduct(temporaryMatrix[2],temporaryMatrix[2]); 
-    if (vectorNorm < 1.5625f && vectorNorm > 0.64f) {
-        vectorNorm= .5f * (3-vectorNorm);                                                 //eq.21
-    } else if (vectorNorm < 100.0f && vectorNorm > 0.01f) {
-        vectorNorm= 1. / sqrt(vectorNorm);   
-    } else {
-        problem = true;  
-    }
-    vectorScale(dCMMatrix[2], temporaryMatrix[2], vectorNorm);
-    
-    
-    /******If we can't renormalize ou matrix, then we reset it.*******/ 
-    if (problem) {          // Our solution is blowing up and we will force back to initial condition.  Hope we are not upside down!
-        dCMMatrix[0][0]= 1.0f;
-        dCMMatrix[0][1]= 0.0f;
-        dCMMatrix[0][2]= 0.0f;
-        dCMMatrix[1][0]= 0.0f;
-        dCMMatrix[1][1]= 1.0f;
-        dCMMatrix[1][2]= 0.0f;
-        dCMMatrix[2][0]= 0.0f;
-        dCMMatrix[2][1]= 0.0f;
-        dCMMatrix[2][2]= 1.0f;
-        problem = false;  
-    }
-    
-}
-
-//Correct the drift or the gyroscope to get a more accurate result
-void AnglesDriftCorrection(float AccelerationVector[3])
-{
-    
-    double scaledIntegratorVector[3];
-    double accelerationMagnitude;
-    double accelerationWeight;
-    double integratorMagnitude;
-    double AccelerationVectorInvertedDystem[3];//We call here Inverted System the Device coordinate system with Dx = Dy and Dy = Dx( the axis are exchanged)
-    double errorRollPitch[3];
-    
-    
-    
-    /******We calculate a vector  proportionalVector and integratorVector to add to the gyroscopeVector to cancel the drift. Those two vectors are calculated with the accelerometer vector. It doesn't cancel the drift for the yaw angle. *******/
-    
-    /****** Calculate the magnitude of the accelerometer vector***********/
-    accelerationMagnitude = sqrt(AccelerationVector[0]*AccelerationVector[0] + AccelerationVector[1]*AccelerationVector[1] + AccelerationVector[2]*AccelerationVector[2]);
-    accelerationMagnitude = accelerationMagnitude / GRAVITY; // We know have value of 1 = 1g
-    
-    // Dynamic weighting of accelerometer info (reliability filter)
-    // Weight for accelerometer info (<0.5G = 0.0, 1G = 1.0- , >1.5G = 0.0)
-    accelerationWeight = constrain(1 - 2*abs(1 - accelerationMagnitude),0,1);   
-    
-    
-    /****We make sure that the acceleration vector has the same system as the one we use in the algorithm *******/
-    AccelerationVectorInvertedDystem[0] =  AccelerationVector[1];
-    AccelerationVectorInvertedDystem[1] =  AccelerationVector[0];
-    AccelerationVectorInvertedDystem[2] =  AccelerationVector[2];
-    
-    
-    /*****We calculate the weights using the fact that 1g = 101********/
-    vectorScale(AccelerationVectorInvertedDystem,AccelerationVectorInvertedDystem,101/9.81);
-    
-    /******We calculate our two vectors proportionalVector and integratorVector********/
-    vectorCrossProduct(errorRollPitch,AccelerationVectorInvertedDystem,dCMMatrix[2]); //adjust the ground of reference
-    vectorScale(proportionalVector,errorRollPitch,kpRollpitch*accelerationWeight);
-    
-    vectorScale(scaledIntegratorVector,errorRollPitch,kiRollpitch*accelerationWeight);
-    vectorAddition(integratorVector,integratorVector,scaledIntegratorVector);     
-    
-    
-    
-    //  Here we will place a limit on the integrator so that the integrator cannot ever exceed half the saturation limit of the gyros
-    integratorMagnitude = sqrt(vectorDotProduct(integratorVector,integratorVector));
-    if (integratorMagnitude > ToRad(300)) {
-        vectorScale(integratorVector,integratorVector,0.5f*ToRad(300)/integratorMagnitude);
-    }
-    
-    
-}
-
-void detectGravity(double gravity[3], float acceleration[3])
-{
-    double norm = sqrt(acceleration[0] * acceleration[0] + acceleration[1] * acceleration[1] + acceleration[2] * acceleration[2]);
-    
-    /***** If the norm is near 1, then the vector is valid******/
-    if(norm >= (GRAVITY*(1-gravityEpsilon)) && norm<= (GRAVITY*(1+gravityEpsilon)))
-    {
-        validGravityCounter++;
-        
-        /******After validAccelerationVectorsNecessaryToDetectGravity vectors, we say that the last valid vector is really the gravity and not the gravity + a certain acceleration*********/
-        if(validGravityCounter == validAccelerationVectorsNecessaryToDetectGravity)
-        {
-            lastGravityVectorDetected[0] = acceleration[0];
-            lastGravityVectorDetected[1] = acceleration[1];
-            lastGravityVectorDetected[2] = acceleration[2];
-            
-            validGravityCounter = 0;
-        }
-    }
-    else
-        validGravityCounter =0;
-    
-    gravity[0] = lastGravityVectorDetected[0];
-    gravity[1] = lastGravityVectorDetected[1];
-    gravity[2] = lastGravityVectorDetected[2];
-    
-}
-
-
+/** 
+ * Receive new IMU data, calculate the new orientation and publish data on the topic
+ */
 int SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr, CPhidgetSpatial_SpatialEventDataHandle *data, int count)
 {
-	int i;
-	//printf("Number of Data Packets in this event: %d\n", count);
-	/*for(i = 0; i < count; i++)
+	sensor_msgs::Imu imu;
+	sensor_msgs::MagneticField mag;
+
+	imu.header.frame_id = "base_link";
+	imu.header.stamp = ros::Time::now();
+
+	mag.header.frame_id = "base_link";
+	mag.header.stamp = ros::Time::now();
+
+	for(int i = 0; i< count; i++)
 	{
-		printf("=== Data Set: %d ===\n", i);
-		printf("Acceleration> x: %6f  y: %6f  x: %6f\n", data[i]->acceleration[0], data[i]->acceleration[1], data[i]->acceleration[2]);
-		printf("Angular Rate> x: %6f  y: %6f  x: %6f\n", data[i]->angularRate[0], data[i]->angularRate[1], data[i]->angularRate[2]);
-		printf("Magnetic Field> x: %6f  y: %6f  x: %6f\n", data[i]->magneticField[0], data[i]->magneticField[1], data[i]->magneticField[2]);
-		printf("Timestamp> seconds: %d -- microseconds: %d\n", data[i]->timestamp.seconds, data[i]->timestamp.microseconds);
+		if (data[i]->angularRate[0] != 0 || data[i]->angularRate[1] != 0 || data[i]->angularRate[2] != 0)
+			orientation_calculation.updateAngles((float*)&(data[i]->angularRate[0]), (float*)&(data[i]->acceleration), data[i]->timestamp.seconds + ((float)data[i]->timestamp.microseconds)/1000000);
+
+        // Save info into the message and publish
+		imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(orientation_calculation.get_roll(),orientation_calculation.get_pitch(), orientation_calculation.get_yaw());
+		imu.angular_velocity.x = data[i]->angularRate[0];
+		imu.angular_velocity.y = data[i]->angularRate[1];
+		imu.angular_velocity.z = data[i]->angularRate[2];
+		imu.linear_acceleration.x = data[i]->acceleration[0];
+		imu.linear_acceleration.y = data[i]->acceleration[1];
+		imu.linear_acceleration.z = data[i]->acceleration[2];
+
+		mag.magnetic_field.x = data[i]->magneticField[0];
+		mag.magnetic_field.y = data[i]->magneticField[1];
+		mag.magnetic_field.z = data[i]->magneticField[2];
+
+		imu_pub.publish(imu);
+		mag_pub.publish(mag);
 	}
 
-	printf("---------------------------------------------\n");*/
-	for(i = 0; i< count; i++)
-	{
-		acc[0] = data[i]->acceleration[0];
-		acc[1] = data[i]->acceleration[1];
-		acc[2] = data[i]->acceleration[2];
-		ang[0] = data[i]->angularRate[0];
-		ang[1] = data[i]->angularRate[1];
-		ang[2] = data[i]->angularRate[2];
-		mag[0] = data[i]->magneticField[0];
-		mag[1] = data[i]->magneticField[1];
-		mag[2] = data[i]->magneticField[2];
-
-		if (ang[0] != 0 || ang[1] != 0 || ang[2] != 0)
-			AnglesMatrixUpdate(ang, data[i]->timestamp.seconds + ((float)data[i]->timestamp.microseconds)/1000000);
-		AnglesNormalize();
-		AnglesDriftCorrection(acc);
-
-		double gravity_[3];
-		detectGravity(gravity_, acc);
-
-		if(!isEqual(gravity, gravity_))
-		{
-
-		/*****We save the new gravity******/
-
-		gravity[0] = gravity_[0]/GRAVITY;
-		gravity[1] = gravity_[1]/GRAVITY;
-		gravity[2] = gravity_[2]/GRAVITY;
-
-		/****** This will give us the pitch and the yaw relative to the User axis and not the Device axis at t0
-		 Calculations are made using the formulation of the rotation matrix*******/
-		pitchOffset = gravity[1];
-		if(pitchOffset>1.0f)
-		    pitchOffset = 1.0f;
-		if(pitchOffset<-1.0f)
-		    pitchOffset = -1.0f;
-
-		pitchOffset = asin(-pitchOffset);
-
-		rollOffset = gravity[2]/cos(pitchOffset);
-		if(rollOffset>1.0f)
-		    rollOffset = 1.0f;
-		if(rollOffset<-1.0f)
-		    rollOffset = -1.0f;
-
-		pitchOffset -= (-asin(dCMMatrix[2][0]));//We substract the actual pitch value from the algorithm
-		rollOffset = acos(rollOffset) - (atan2(dCMMatrix[2][1],dCMMatrix[2][2]));//We substract the actual roll value from the algorithm
-		}
-
-	}
-
-	ROS_INFO("publishing IMU data in ROS!");
-	
-	spatial_good = true;	
-
+	spatialError = 0;
 	return 0;
 }
 
@@ -811,6 +384,7 @@ int SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr, CPhidgetSpa
 
 
 int interfacekit_simple()
+// initialize the phidget interface kit board and phidget spatial (imu)
 {
 	int result, num_analog_inputs, num_digital_inputs;
 	const char *err;
@@ -819,29 +393,18 @@ int interfacekit_simple()
 	CPhidgetInterfaceKit_create(&ifKit);
 
 	//Set the handlers to be run when the device is plugged in or opened from software, unplugged or closed from software, or generates an error.
-
-	CPhidget_set_OnDetach_Handler((CPhidgetHandle)ifKit, DetachHandler, NULL);
 	CPhidget_set_OnError_Handler((CPhidgetHandle)ifKit, ErrorHandler, NULL);
-           
-	CPhidgetInterfaceKit_set_OnInputChange_Handler (ifKit, InputChangeHandler, NULL);
+	CPhidgetInterfaceKit_set_OnInputChange_Handler (ifKit, DigitalInputHandler, NULL);
+	CPhidgetInterfaceKit_set_OnSensorChange_Handler (ifKit, AnalogInputHandler, NULL);
 
-	CPhidgetInterfaceKit_set_OnSensorChange_Handler (ifKit, SensorChangeHandler, NULL);
-
-	CPhidgetInterfaceKit_set_OnOutputChange_Handler (ifKit, OutputChangeHandler, NULL);
-
-	//For phidget spatial
-	//CPhidgetSpatialHandle spatial = 0;
+	//Initialize the phidget spatial board, if any
 	CPhidgetSpatial_create(&spatial);
-	CPhidget_set_OnAttach_Handler((CPhidgetHandle)spatial, AttachHandler, NULL);
-	CPhidget_set_OnDetach_Handler((CPhidgetHandle)spatial, DetachHandler, NULL);
 	CPhidget_set_OnError_Handler((CPhidgetHandle)spatial, ErrorHandler, NULL);
 	CPhidgetSpatial_set_OnSpatialData_Handler(spatial, SpatialDataHandler, NULL);
 
 
-	//open the interfacekit for device connections
+	//open the interfacekit and spatial for device connections
 	CPhidget_open((CPhidgetHandle)ifKit, -1);
-
-
 	CPhidget_open((CPhidgetHandle)spatial, -1);
 
 
@@ -849,6 +412,7 @@ int interfacekit_simple()
 	CPhidgetInterfaceKit_getSensorCount(ifKit, &num_analog_inputs);
 
 
+	// attach the devices
 	printf("Waiting for spatial to be attached.... \n");
 	if((result = CPhidget_waitForAttachment((CPhidgetHandle)spatial, 1000)))
 	{
@@ -862,23 +426,16 @@ int interfacekit_simple()
 	{
 		CPhidget_getErrorDescription(result, &err);
 		ROS_ERROR("Phidget IK: Problem waiting for attachment: %s\n", err);
-		phidget888_connected = false;
 		interfaceKitError = 1;
 	}
-
-	phidget888_connected = true;
 	
-	CPhidgetInterfaceKit_setRatiometric(ifKit, 0);//
-
+	CPhidgetInterfaceKit_setRatiometric(ifKit, 0);
 	CPhidgetSpatial_setDataRate(spatial, 16);	
 
+	// create and attach the encoders
 	 CPhidgetEncoder_create(&m_leftEncoder);
          CPhidget_set_OnAttach_Handler((CPhidgetHandle) m_leftEncoder,LeftEncoderAttach, NULL);
          CPhidget_open((CPhidgetHandle) m_leftEncoder, -1);
-        
-	if (m_encoder1Seen && m_encoder2Seen)
-	    phidget_encoder_connected = true;
-	else phidget_encoder_connected = false;
 
 	//Initialize the sonars, if any are present
 	if(sonarsPresent)
@@ -952,36 +509,11 @@ int main(int argc, char* argv[])
 	nh.param("strobeOutput", strobeOutput, -1);
 	nh.param("lastSonarInput", lastSonarInput, -1);
 	nh.param("firstSonarInput", firstSonarInput, -1);
-	nh.param("battery", batteryPort, 0);
-	nh.param("irFront", irFrontPort, 1);
-	nh.param("irBack", irBackPort, 2);
-	nh.param("gripper", gripperPort, 3);
+	nh.param("battery", batteryPort, 0); //index of the battery voltage sensor
+	nh.param("irFront", irFrontPort, 1); // index of the front ir sensor
+	nh.param("irBack", irBackPort, 2); //index of the back ir sensor
 	nh.param("motors_inverted", motors_inverted, false);
 	nh.param("encoders_inverted", encoders_inverted, false);
-
-	dCMMatrix[0][0]=1;
-	dCMMatrix[0][1]=0;
-	dCMMatrix[0][2]=0;
-	dCMMatrix[1][0]=0;
-	dCMMatrix[1][1]=1;
-	dCMMatrix[1][2]=0;
-	dCMMatrix[2][0]=0;
-	dCMMatrix[2][1]=0;
-	dCMMatrix[2][2]=1;
-
-	timestampPreviousCall = 0;
-   	pitchOffset = 0;
-    	rollOffset = 0;
-	proportionalVector[0] = 0;
-	proportionalVector[1] = 0;
-	proportionalVector[2] = 0;
-
-	integratorVector[0] = 0;
-	integratorVector[1] = 0;
-	integratorVector[2] = 0;
-	gyroscopeVectorCorrected[0] = 0;
-	gyroscopeVectorCorrected[1] = 0;
-	gyroscopeVectorCorrected[2] = 0;
 
 	//create an updater that will send information on the diagnostics topics
 	diagnostic_updater::Updater updater;
@@ -992,44 +524,33 @@ int main(int argc, char* argv[])
 	interfacekit_simple(); 
 
 	posdata_pub = n.advertise<corobot_msgs::PosMsg>("position_data", 100);
-        irData_pub = n.advertise<corobot_msgs::IrMsg>("infrared_data", 100);
+        irData_pub = n.advertise<corobot_msgs::SensorMsg>("infrared_data", 100);
         powerdata_pub = n.advertise<corobot_msgs::PowerMsg>("power_data", 100);
-        bumper_pub = n.advertise<corobot_msgs::BumperMsg>("bumper_data", 100);
-	gripper_pub = n.advertise<corobot_msgs::GripperMsg>("gripper_data",100);  //gripper as an analog input?
-        sonar_pub = n.advertise<corobot_msgs::RangeSensor>("sonar_data", 100);
-	spatial_pub = n.advertise<corobot_msgs::spatial>("spatial_data",100);
+        bumper_pub = n.advertise<corobot_msgs::SensorMsg>("bumper_data", 100);
+        sonar_pub = n.advertise<corobot_msgs::SensorMsg>("sonar_data", 100);
 	imu_pub = n.advertise<sensor_msgs::Imu>("imu_data",100);
+	mag_pub = n.advertise<sensor_msgs::MagneticField>("magnetic_data",100);
+        other_pub = n.advertise<corobot_msgs::SensorMsg>("sensor_data", 100); // sensors connected to the phidget interface kit other than bumpers, voltage sensor, ir sensor and sonars. 
 
-	ros::Publisher phidget_info_pub = n.advertise<corobot_msgs::phidget_info>("phidget_info", 1000);
-
-	corobot_msgs::phidget_info info;
-	if(phidget888_connected)
-	  info.phidget888_connected = 1;
-	else info.phidget888_connected = 0;
-	if(phidget_encoder_connected)
-	  info.phidget_encoder_connected = 1;
-	else info.phidget_encoder_connected = 0;
-	phidget_info_pub.publish(info);
-
-	ros::Rate loop_rate(20);  //20 Hz
 
 	while (ros::ok())
-            {
-                ros::spinOnce();
-		if(sonarsPresent)
+    {
+        ros::spinOnce(); // ROS loop
+        
+		if(sonarsPresent) // acquire new sonar data if sonar sensors are present
 			sendSonarResult();
-		publish_data();
-                loop_rate.sleep();
-		updater.update();
-            }
-	printf("Out of ros spin");
+		publish_encoder(); // acquire and publish encoder data
+		updater.update(); //update diagnostics
+    }
+
 	
+	// close all the phidget devices
 	CPhidget_close((CPhidgetHandle)ifKit);
 	CPhidget_delete((CPhidgetHandle)ifKit);
 	if (m_rightEncoder != m_leftEncoder)
 	{
-	CPhidget_close((CPhidgetHandle)m_leftEncoder);
-	CPhidget_delete((CPhidgetHandle)m_leftEncoder);
+		CPhidget_close((CPhidgetHandle)m_leftEncoder);
+		CPhidget_delete((CPhidgetHandle)m_leftEncoder);
 	}
 	CPhidget_close((CPhidgetHandle)m_rightEncoder);
 	CPhidget_delete((CPhidgetHandle)m_rightEncoder);

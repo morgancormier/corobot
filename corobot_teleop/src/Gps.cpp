@@ -1,47 +1,40 @@
 #include "GPS.h"
 #include <stdio.h>
 
+//GPS Widget, the map is not displayed as of now as it would be against google maps rules without any payments to google. An open source solution has to be found
 
 Gps::Gps(){
-
-
 }
 
 
 void Gps::set_map_type(QString value)
 //changes the map type
 {
-
 }
 
 void Gps::check_size()
 //the size od the map if the size of the web widget
 {
-
 }
 
 void Gps::set_zoom(int value)
 //set the map zoom value
 {
-
 }
 
 void Gps::update_coord(double lat, double lon)
 //update the last coordinate value
 {
-
-
 }
 
 
 void Gps::selection_changed()
 //the itinerary selection has changed, therefore change the path that is displayed
 {
-
 }
 
 void Gps::start_clicked()
-//the button start has been clicked
+//the button start has been clicked. So we start the itinary
 {
     started = true;
     path.clear();
@@ -53,7 +46,7 @@ void Gps::start_clicked()
 }
 
 void Gps::stop_clicked()
-//the button stop has been clicked
+//the button stop has been clicked. Stop the itinerary
 {
     started = false;
     start_pos_set = false;
@@ -61,7 +54,7 @@ void Gps::stop_clicked()
 }
 
 void Gps::save_clicked()
-//the button save has been clicked
+//the button save has been clicked. Save the itinerary in a file
 {
     QList<QListWidgetItem *> l = list_widget->findItems(QString("New Itinerary"),Qt::MatchExactly);
     if(l.count() != 0){
@@ -88,7 +81,7 @@ void Gps::setList(QListWidget *l)
 }
 
 void Gps::load_clicked()
-//the button stop has been clicked
+//the button stop has been clicked. Load the itinerary file given by the user
 {
     QStringList files = QFileDialog::getOpenFileNames();
 

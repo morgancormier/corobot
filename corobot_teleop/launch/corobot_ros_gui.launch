@@ -49,7 +49,6 @@ If 1, the material has to be present and a port value may have to be given
 <arg name="battery" value="0"/> <!-- Index of the analog input for the battery(default = 0). -1 if this one is not present or the data doesn't have to be read -->
 <arg name="irFront" value="1"/> <!-- Index of the analog input for the front infrared sensor(default = 1). -1 if this one is not present or the data doesn't have to be read -->
 <arg name="irBack" value="2"/> <!-- Index of the analog input for the rear infrared sensor(default = 2). if this one is not present or the data doesn't have to be read -->
-<arg name="gripper" value="-1"/> <!-- Index of the analog input for the gripper pressure sensor(default = 3). -1 if this one is not present or the data doesn't have to be read -->
 
 
 <!--***** Kinect *****-->
@@ -109,7 +108,6 @@ If 1, the material has to be present and a port value may have to be given
 		<param name="battery" type="int" value="$(arg battery)"/>
 		<param name="irFront" type="int" value="$(arg irFront)"/>
 		<param name="irBack" type="int" value="$(arg irBack)"/> 
-		<param name="gripper" type="int" value="$(arg gripper)"/>
 		<param name="motors_inverted" type="bool" value="$(arg motors_inverted)"/>
 		<param name="encoders_inverted" type="bool" value="$(arg encoders_inverted)"/>
   	</node>

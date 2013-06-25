@@ -120,11 +120,9 @@ joint::joint(ArmRotationWidget *graphWidget)
  }
 
  QVariant joint::itemChange(GraphicsItemChange change, const QVariant &value)
+// Request update of the parent graph
  {
      switch (change) {
-     case ItemPositionHasChanged:
-      //   foreach (Edge *edge, edgeList)
-        //     edge->adjust();
 	 if(graph != NULL)
          	graph->itemMoved();
 	  if(graph_rotation != NULL)

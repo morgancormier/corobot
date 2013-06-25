@@ -4,6 +4,9 @@
 
 const int LINE_POS = 70;
 
+// Widget capable not only of displaying the camera image but also to zoom in and out on the image. 
+// Of course the zoom is a software zoom, even using a camera with hardware zoom.
+
 CameraWidget::CameraWidget(QWidget *parent)
     : QGraphicsView(parent), timerId(0)
 {
@@ -27,7 +30,7 @@ CameraWidget::CameraWidget(QWidget *parent)
     scene->addItem(line);
 
 
-timerId = startTimer(1000 / 25);
+timerId = startTimer(1000 / 25); // Used to animate the zooming in and out to have this fluid animation
  }
 
 
@@ -46,6 +49,7 @@ void CameraWidget::keyPressEvent(QKeyEvent *event)
      }
  }
 void CameraWidget::timerEvent(QTimerEvent *event)
+// Animate the zooming in and out to have this fluid animation
  {
      Q_UNUSED(event);
 
@@ -78,11 +82,13 @@ void CameraWidget::timerEvent(QTimerEvent *event)
 
 
  void CameraWidget::wheelEvent(QWheelEvent *event)
+ // Use the wheel to zoom in and out
  {
      scaleView(pow((double)2, -event->delta() / 240.0));
  }
 
  void CameraWidget::drawBackground(QPainter *painter, const QRectF &rect)
+ // Draw the background of the view, seem when zoomed out.
  {
      Q_UNUSED(rect);
 
@@ -109,6 +115,7 @@ void CameraWidget::timerEvent(QTimerEvent *event)
  }
 
  void CameraWidget::scaleView(qreal scaleFactor)
+ //method used to change the scale of the view
  {
      qreal factor = transform().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
      if (factor < 0.07 || factor > 100)
