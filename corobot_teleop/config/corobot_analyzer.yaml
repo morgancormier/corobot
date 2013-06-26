@@ -25,14 +25,30 @@ analyzers:
         path: Servos
         contains: Servo
         remove_prefix: PhidgetServo
-
+analyzers:
    Webcam:
-    type: diagnostic_aggregator/GenericAnalyzer
+    type: diagnostic_aggregator/AnalyzerGroup
     path: Webcam
-    find_and_remove_prefix: PTZ
+    analyzers:
+      Webcam:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: FrontCamera
+        find_and_remove_prefix: PTZ
+      PanTilt:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: corobot_pantilt
+        find_and_remove_prefix: PTZ
    GPS:
     type: diagnostic_aggregator/GenericAnalyzer
     path: GPS
     find_and_remove_prefix: corobot_gps
+   Hokuyo:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: Hokuyo
+    find_and_remove_prefix: hokuyo
+   SSC32:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: SSC32
+    find_and_remove_prefix: ssc32control
 
 

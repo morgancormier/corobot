@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(corobot_ssc32)
 
-find_package(catkin REQUIRED COMPONENTS roscpp corobot_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp corobot_msgs diagnostic_updater)
 
 catkin_package(
    LIBRARIES ${PROJECT_NAME}

@@ -5,7 +5,8 @@
 #include <math.h>
 #include <errno.h>
 #include <sys/stat.h>
-
+#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/publisher.h>
 
 using namespace Servo; 
 
@@ -13,6 +14,7 @@ SSC32 m_ssc32;
 
 std::string SSC32_PORT;
 ros::Timer timer;
+int ssc32Error = 0; // use for diagnostics purpose
 
 bool first_time_command[20] = {false};
 
@@ -22,16 +24,39 @@ bool first_time_command[20] = {false};
 void timerCallback(const ros::TimerEvent&)
 // stop the motors after the requested time
 {
+	bool ret;	
+
 	m_ssc32.SendMessage(1,0,0);
+	if (ret)
+		ssc32Error = 0;
+	else
+		ssc32Error = 2;
+
 	m_ssc32.SendMessage(0,0,0);
+	if (ret)
+		ssc32Error = 0;
+	else
+		ssc32Error = 2;
 }
 
 void SetSpeedTopic(const corobot_msgs::MotorCommand::ConstPtr &msg)
 {
 // set the motors requested speed. 
 	ros::NodeHandle n;
+	bool ret;
+
 	m_ssc32.SendMessage(1,(msg->leftSpeed*-5)+1500,(100-msg->acceleration)*10);
+	if (ret)
+		ssc32Error = 0;
+	else
+		ssc32Error = 2;
+
 	m_ssc32.SendMessage(0,(msg->rightSpeed*-5)+1500,(100-msg->acceleration)*10);
+	if (ret)
+		ssc32Error = 0;
+	else
+		ssc32Error = 2;
+
 	timer = n.createTimer(ros::Duration(msg->secondsDuration), timerCallback, true);
 }
 
@@ -58,9 +83,30 @@ void setPositionCallback(const corobot_msgs::ServoPosition &msg)
 	}
 	
 	if (!ok)
+	{
 		ROS_ERROR("Could not set the servo motor number %d to the position %f",msg.index, msg.position);
+		ssc32Error = 2;	
+	}
 }
 
+void ssc32_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
+/**
+ * Function that will report the status of the hardware to the diagnostic topic
+ */
+{
+	if (!ssc32Error)  
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "initialized");
+	else if (ssc32Error == 1)
+	{
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot be initialized");
+		stat.addf("Recommendation", "Please make sure the port path is the correct one.");
+	}
+	else if (ssc32Error == 2)
+	{
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot set speed");
+		stat.addf("Recommendation", "Please make sure the port path is the correct one. Also make sure the servo motors / motors are well connected to the ssc32 board");
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -71,6 +117,12 @@ int main(int argc, char **argv)
 	//Subscribe to topics
 	ros::Subscriber velocity=n.subscribe<corobot_msgs::MotorCommand>("/ssc32_velocity",1000, SetSpeedTopic);
 	ros::Subscriber position_sub = n.subscribe("/setPositionServo",100, &setPositionCallback);
+
+
+	//create an updater that will send information on the diagnostics topics
+	diagnostic_updater::Updater updater;
+	updater.setHardwareIDf("SSC32");
+	updater.add("SSC32", ssc32_diagnostic); //function that will be executed with updater.update()
 
 	std::string ssc32_port_;
 
@@ -96,10 +148,17 @@ int main(int argc, char **argv)
 	if(m_ssc32.startSerial(SSC32_PORT))
 	{
 	  ROS_INFO("Success!!! Connect to serial port");
+	  ssc32Error = 0;
 	}
+	else
+	  ssc32Error = 1; 
 
 	//main ros function
-        ros::spin();
+	while (ros::ok())
+        {
+                ros::spinOnce();
+		updater.update();
+	}
 
         m_ssc32.stopSerial();
         

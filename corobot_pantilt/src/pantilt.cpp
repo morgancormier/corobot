@@ -47,6 +47,8 @@
 #include <linux/videodev2.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/publisher.h>
 
 extern "C" {
   #include "dynctrl.h"
@@ -64,6 +66,7 @@ int pantilt_move(int fd, int pan, int tilt);
 void pantilt_check_speed(int fd);
 
 static int cam_fd;
+int pantiltError = 0; // use for diagnostics purpose
 
 void pantiltCallback(const corobot_msgs::PanTiltConstPtr& msg)
 /**
@@ -79,6 +82,24 @@ void pantiltCallback(const corobot_msgs::PanTiltConstPtr& msg)
   }
 }
 
+void pantilt_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
+/**
+ * Function that will report the status of the hardware to the diagnostic topic
+ */
+{
+	if (!pantiltError)  
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "initialized");
+	else if (pantiltError == 1)
+	{
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Cannot be initialized");
+		stat.addf("Recommendation", "Please make sure the port path is the correct one. Make sure the permissions are correct and that the camera has pan tilt option");
+	}
+	else if (pantiltError == 2)
+	{
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Cannot move camera");
+		stat.addf("Recommendation", "Please make sure the port path is the correct one. Make sure the permissions are correct and that the camera has pan tilt option");
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -91,13 +112,21 @@ int main(int argc, char** argv)
  nh.param<std::string>("device",dev, "/dev/video0");
  nh.param<std::string>("script_path",path, "init_camera.sh");
 
+  //create an updater that will send information on the diagnostics topics
+  diagnostic_updater::Updater updater;
+  updater.setHardwareIDf("PanTIlt");
+  updater.add("PanTilt", pantilt_diagnostic); //function that will be executed with updater.update()
+
 //Execute a script to initialize the camera 
 
   //system(path.c_str());
   if ((cam_fd = open(dev.c_str(), O_RDWR)) == -1) {
-    ROS_INFO("ERROR: PanTilt could not open %s interface\n",dev.c_str());
-    return -1;
+    ROS_ERROR("PanTilt could not open %s interface\n",dev.c_str());
+    pantiltError = 1;
   }
+  else
+    pantiltError = 0;
+
   ROS_INFO("PanTilt Opened: %s\n",dev.c_str());
 
 // Initialize the pan tilt camera
@@ -107,7 +136,12 @@ int main(int argc, char** argv)
 
 //adversize the topics
   ros::Subscriber pantilt_sub = n.subscribe("/pantilt", 1, pantiltCallback);
-  ros::spin();
+
+  while (ros::ok())
+  {
+	ros::spinOnce();
+	updater.update();
+  }
 
   close(cam_fd);
   return 0;
@@ -145,6 +179,12 @@ void pantilt_check_speed(int fd) {
 int pantilt_reset(int fd) {
   int result;
   result = uvcPanTilt(fd, 0, 0, 3);
+
+  if (result == -1)
+	pantiltError = 2;
+  else
+	pantiltError = 0;
+
   sleep(2);
   return result;
 }
@@ -152,7 +192,11 @@ int pantilt_reset(int fd) {
 int pantilt_move(int fd, int pan, int tilt){
   int result;
   result = uvcPanTilt(fd, pan*BITS_PER_DEGREE, tilt*BITS_PER_DEGREE, 0);
-  //usleep((70+10*abs(pan))*1000);  // moving delay??
+
+  if (result == -1)
+	pantiltError = 2;
+  else
+	pantiltError = 0;
   return result;
 }
 
