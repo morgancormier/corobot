@@ -129,6 +129,7 @@ signals :
 public:
         ~Ros();
         Ros();
+	void run();
         void init();
         void init(const std::string & master, const std::string & host);
 

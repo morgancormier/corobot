@@ -68,13 +68,11 @@ void Ros::subscribe()
 
     emit arm_model(arm_al5a, arm_pincher, arm_reactor, arm_old_ssc32 || arm_old_phidget);
 
-
     //Advertise topics
     driveControl_pub = n.advertise<corobot_msgs::MotorCommand>("PhidgetMotor", 100);
     velocityValue_pub = n.advertise<std_msgs::Int32>("velocityValue", 100);
     moveArm_pub = n.advertise<corobot_msgs::MoveArm>("armPosition", 100);
     pan_tilt_control = n.advertise<corobot_msgs::PanTilt>("pantilt",5);
-
 
     //Subscribe to topics
     imu=n.subscribe("imu_data",1000, &Ros::imuCallback,this);
@@ -114,6 +112,10 @@ void Ros::init(){
 
     this->subscribe();
     this->start();
+}
+
+void Ros::run(){
+    ros::spin();
 }
 
 //subscribe to only the camera topics we are interested in
@@ -393,6 +395,7 @@ void Ros::takepicCallback(const corobot_msgs::takepic::ConstPtr &msg)
 // Imu callback
 void Ros::imuCallback(const sensor_msgs::Imu::ConstPtr &msg)
 {
+
     double acc_x, acc_y, acc_z, ang_x, ang_y, ang_z;
 
     acc_x = (double)msg->linear_acceleration.x;

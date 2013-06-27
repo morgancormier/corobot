@@ -99,7 +99,7 @@ If 1, the material has to be present and a port value may have to be given
 
 <!--***** LAUNCH FILE *****-->
   <group if="$(arg phidgetInterfaceKit)">
-  	<node pkg="corobot_phidget_ik" name="phidgettoROS" type="corobot_phidget">
+  	<node pkg="corobot_phidget_ik" name="phidget_interface_kit" type="corobot_phidget">
     		<param name="rearBumper" type="bool" value="$(arg rearBumper)"/>
 		<param name="bwOutput" type="int" value="$(arg bwOutput)"/>
 		<param name="strobeOutput" type="int" value="$(arg strobeOutput)"/>

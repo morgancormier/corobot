@@ -184,12 +184,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //set scenes to the graphicsView widget
-    ui->graphicsView->setScene(scene);
-    ui->graphicsView_2->setScene(scene4);
-    ui->graphicsView_3->setScene(scene3);
-    ui->graphicsView_10->setScene(scene10);
-    ui->mapView->setScene(scene2);
-    ui->frontView->setScene(scene5);
 
 	scene10->setSceneRect(0,0,640,480);
 	image_rear_cam.setPos(0,0);
@@ -214,6 +208,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	scene3->setSceneRect(0,0,640,480);
 	image_kinect_depth.setPos(0,0);
 	scene3->addItem(&image_kinect_depth);
+
+	ui->graphicsView->setScene(scene);
+    	ui->graphicsView_2->setScene(scene4);
+    	ui->graphicsView_3->setScene(scene3);
+    	ui->graphicsView_10->setScene(scene10);
+    	ui->mapView->setScene(scene2);
+    	ui->frontView->setScene(scene5);
 
     connect(&r,SIGNAL(save_image(bool)), &image_ptz_cam, SLOT(saveImage(bool))); //order to save the current image from the front camera.
 

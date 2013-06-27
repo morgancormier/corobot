@@ -9,22 +9,22 @@ analyzers:
         type: diagnostic_aggregator/GenericAnalyzer
         path: InterfaceKit
         contains: Interface Kit
-        remove_prefix: phidgettoROS
+        remove_prefix: phidget_interface_kit
       Spatial:
         type: diagnostic_aggregator/GenericAnalyzer
         path: Spatial 
         contains: Spatial
-        remove_prefix: phidgettoROS
+        remove_prefix: phidget_interface_kit
       Encoders:
         type: diagnostic_aggregator/GenericAnalyzer
         path: Encoders 
         contains: Encoders
-        remove_prefix: phidgettoROS
+        remove_prefix: phidget_interface_kit
       Servos:
         type: diagnostic_aggregator/GenericAnalyzer
         path: Servos
         contains: Servo
-        remove_prefix: PhidgetServo
+        remove_prefix: phidget_interface_kit
 analyzers:
    Webcam:
     type: diagnostic_aggregator/AnalyzerGroup
