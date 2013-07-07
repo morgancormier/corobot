@@ -154,9 +154,9 @@ static float irVoltageToDistance(float volts)
 {
   int sensorValue=int(volts*200.0+0.5);
   float distanceInCm;
-  if (sensorValue>=80 && sensorValue <= 500) //Outside of those bonds, the value is incorrect as our sensor can detect froom 10cm to 80cm only
+  if (sensorValue>=80 && sensorValue <= 530) //Outside of those bonds, the value is incorrect as our sensor can detect froom 10cm to 80cm only
     {
-      distanceInCm= 4800/(sensorValue-20);
+      distanceInCm= 2076/(sensorValue-11);
     }
   else //out of bonds
     {
