@@ -127,6 +127,9 @@ p, li { white-space: pre-wrap; }
               <property name="text">
                <string>Environment variables</string>
               </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
            </layout>

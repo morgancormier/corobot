@@ -105,9 +105,7 @@ void Ros::subscribe()
     initialized = true;
 }
 
-void Ros::init(){
-    int argc=0;
-    char** argv= NULL;
+void Ros::init(int argc, char *argv[]){
     ros::init(argc, argv,"GUI");
 
     this->subscribe();
@@ -169,7 +167,7 @@ void Ros::currentCameraTabChanged(int index)
 }
 
 // Initialize the ROS node with the ROS_MASTER_URI and ROS_IP given by the user in the interface
-void Ros::init(const std::string & master,const std::string & host){
+void Ros::init(int argc, char *argv[],const std::string & master,const std::string & host){
 		std::map<std::string,std::string> remappings;
 		remappings["__master"] = master;
 		remappings["__ip"] = host;

@@ -130,8 +130,8 @@ public:
         ~Ros();
         Ros();
 	void run();
-        void init();
-        void init(const std::string & master, const std::string & host);
+        void init(int argc, char *argv[]);
+        void init(int argc, char *argv[], const std::string & master, const std::string & host);
 
         ros::Publisher pan_tilt_control;
         void subscribe(); //function that initialize every ros variables declared above.

@@ -222,7 +222,6 @@ MainWindow::MainWindow(QWidget *parent) :
 next_gripper_state = true;
 
 
-
 //change focus policy to always be able to move robot with the keyboard
 ui->camera->setFocusPolicy(Qt::NoFocus);
 this->setFocusPolicy(Qt::StrongFocus);
@@ -235,15 +234,21 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::setArguments(int argc_, char *argv_[])
+{
+	argc = argc_;
+	argv = argv_;
+}
+
 
 void MainWindow::connect_clicked(){ // executed when the connect button is pushed
     ui->connect->setText("Disconnect");
     ui->connect->setEnabled(false);
     // Initialize the ROS node
     if ( ui->environmentcheckbox->isChecked() ) {
-            r.init();
+            r.init(argc, argv);
     } else {
-            r.init(ui->Master->text().toStdString(),ui->Host->text().toStdString());
+            r.init(argc, argv, ui->Master->text().toStdString(),ui->Host->text().toStdString());
             ui->Master->setReadOnly(true);
             ui->Host->setReadOnly(true);
     }

@@ -29,7 +29,8 @@ int m_leftEncoderNumber,m_rightEncoderNumber;
 bool m_rearBumperPresent = false; // tells if the rear Bumper is present on the robot or not.
 bool sonarsPresent = false; //tells if some sonars are connected
 
-ros::Publisher posdata_pub,powerdata_pub,irData_pub,bumper_pub,spatial_pub, imu_pub, mag_pub, sonar_pub, other_pub; //topics where we want to publish to
+ros::Publisher posdata_pub,powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub; //topics where we want to publish to
+	
 
 int bwOutput = -1; //Output bw for the sonars. -1 if no sonars are present
 int strobeOutput = -1; //Output strobe for the sonars. -1 if no sonars are present
@@ -521,8 +522,7 @@ int main(int argc, char* argv[])
 	updater.add("Interface Kit", phidget_ik_diagnostic); //function that will be executed with updater.update()
 	updater.add("Spatial", phidget_spatial_diagnostic); //function that will be executed with updater.update()
 	updater.add("Encoders", phidget_encoder_diagnostic); //function that will be executed with updater.update()
-	interfacekit_simple(); 
-
+	
 	posdata_pub = n.advertise<corobot_msgs::PosMsg>("position_data", 100);
         irData_pub = n.advertise<corobot_msgs::SensorMsg>("infrared_data", 100);
         powerdata_pub = n.advertise<corobot_msgs::PowerMsg>("power_data", 100);
@@ -532,6 +532,7 @@ int main(int argc, char* argv[])
 	mag_pub = n.advertise<sensor_msgs::MagneticField>("magnetic_data",100);
         other_pub = n.advertise<corobot_msgs::SensorMsg>("sensor_data", 100); // sensors connected to the phidget interface kit other than bumpers, voltage sensor, ir sensor and sonars. 
 
+	interfacekit_simple();
 
 	while (ros::ok())
     {

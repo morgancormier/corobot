@@ -26,6 +26,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void resizeEvent(QResizeEvent *); //execute this function when the window size changes
+    void setArguments(int argc_, char *argv_[]);
 
 protected:
     void keyPressEvent(QKeyEvent *event);//executed each time a keyboard key is pushed
@@ -47,6 +48,8 @@ private:
     bool IR_data_show;
     QMessageBox msgBox;
     QElapsedTimer gpsUrlTImer;
+    int argc;
+    char **argv;
 
     // Object Image representing the camera steam that is displayed on the graphicsview
     Image image_kinect_depth;// allcamera scene : bottom right image
