@@ -239,21 +239,25 @@ void ArmWidget::setModel(bool arm_al5a,bool arm_pincher,bool arm_reactor,bool ar
     {
         armShoulderSegmentMeters= COROBOT_ARM_SHOULDER_SEGMENT_METERS;
         armElbowSegmentMeters= COROBOT_ARM_ELBOW_SEGMENT_METERS;
+	arm_type = OldCorobot;
     }
     else if (arm_pincher)
     {
         armShoulderSegmentMeters= PINCHER_ARM_SHOULDER_SEGMENT_METERS;
         armElbowSegmentMeters= PINCHER_ARM_ELBOW_SEGMENT_METERS;
+	arm_type = Pincher;
     }
     else if (arm_reactor)
     {
         armShoulderSegmentMeters= REACTOR_ARM_SHOULDER_SEGMENT_METERS;
         armElbowSegmentMeters= REACTOR_ARM_ELBOW_SEGMENT_METERS;
+	arm_type = Reactor;
     }
     else if (arm_al5a)
     {
         armShoulderSegmentMeters= AL5A_ARM_SHOULDER_SEGMENT_METERS;
         armElbowSegmentMeters= AL5A_ARM_ELBOW_SEGMENT_METERS;
+	arm_type = Al5a;
     }
 
     printf("ARM_LENGTH %f, %f", armShoulderSegmentMeters, armShoulderSegmentMeters);
@@ -382,8 +386,16 @@ void ArmWidget::timerEvent(QTimerEvent *event)
             else
                 emit theta2(t2 + M_PI);
 
-	    emit shoulderAngle_rad(t1);
-	    emit elbowAngle_rad(-t2);
+	    if (arm_type == Al5a)
+	    {
+		emit shoulderAngle_rad(180 - t1);
+	    	emit elbowAngle_rad(180 + t2);
+	    }
+	    else
+	    {
+	        emit shoulderAngle_rad(t1);
+	        emit elbowAngle_rad(-t2);
+	    }
 	
 		// Draw the arm lines 
                  QList<QGraphicsLineItem *> lines;

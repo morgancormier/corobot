@@ -52,6 +52,10 @@ double PixeltoMeter(const double pixel);
 double MetersToPixels(const double meters);
 
 
+typedef enum
+{
+    Al5a, Pincher, Reactor, OldCorobot
+} armType;
 
 class ArmWidget : public QGraphicsView
  {
@@ -90,6 +94,7 @@ class ArmWidget : public QGraphicsView
      QPointF end_effector;
      bool shoulder;
      bool elbow;
+     armType arm_type;
 
  };
 

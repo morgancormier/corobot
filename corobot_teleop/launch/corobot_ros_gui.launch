@@ -6,6 +6,7 @@ For each material, a value of 1 means that the module corresponding to this mate
 If 1, the material has to be present and a port value may have to be given
 -->
 
+<!-- Note that it is assumed that if you don't have an explorer or a corobot 4 wheel drive you have a corobot 2 wheel drive -->
 <arg name="Explorer" value="0"/> <!-- 1 if you have a Corobot Explorer, 0 if you have a Corobot Classic -->
 <arg name="Corobot4WD" value="0"/> <!-- 1 if you have a Corobot with 4 Wheel Drive -->
 
