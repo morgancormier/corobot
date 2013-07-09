@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package>
+  <name>corobot_launch</name>
+  <version>1.0.0</version>
+  <description>
+
+     Launch file to start the driver nodes to run the corobot hardware, but also some other useful nodes like corobot_teleop to control the robot.
+
+  </description>
+  <author>Morgan Cormier/mcormier@coroware.com</author>
+  <license>Copyright 2011 Coroware, Inc.</license>
+  <maintainer email="mcormier@coroware.com">Morgan Cormier</maintainer>
+  <url type="website">http://ros.org/wiki/corobot_launch</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <url></url>
+
+  <run_depend>corobot_msgs</run_depend>
+  <run_depend>corobot_arm</run_depend>
+  <run_depend>corobot_camera</run_depend>
+  <run_depend>corobot_gps</run_depend>
+  <run_depend>corobot_joystick</run_depend>
+  <run_depend>corobot_map_to_jpeg</run_depend>
+  <run_depend>corobot_pantilt</run_depend>
+  <run_depend>corobot_phidget_ik</run_depend>
+  <run_depend>corobot_ssc32</run_depend>
+  <run_depend>corobot_state_tf</run_depend>
+  <run_depend>corobot_teleop</run_depend>
+  <run_depend>phidget_motor</run_depend>
+  <run_depend>phidget_servo</run_depend>
+
+
+</package>
+
+
