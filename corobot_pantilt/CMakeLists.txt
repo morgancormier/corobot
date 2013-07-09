@@ -11,3 +11,4 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(corobot_pantilt src/pantilt.cpp src/dynctrl.c src/utils.c src/v4l2uvc.c)
 target_link_libraries(corobot_pantilt ${catkin_LIBRARIES})
+add_dependencies(corobot_pantilt corobot_msgs_gencpp)

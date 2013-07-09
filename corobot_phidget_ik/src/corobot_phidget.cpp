@@ -28,6 +28,7 @@ int m_leftEncoderNumber,m_rightEncoderNumber;
 
 bool m_rearBumperPresent = false; // tells if the rear Bumper is present on the robot or not.
 bool sonarsPresent = false; //tells if some sonars are connected
+bool imu = true; //tells if the imu are connected
 
 ros::Publisher posdata_pub,powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub; //topics where we want to publish to
 	
@@ -104,6 +105,7 @@ void encoderAttach(const int which)
         // now check the assumption we have the encoders correct
         int leftSerial;
         int rightSerial;
+	ros::NodeHandle n;
 
         CPhidget_getSerialNumber((CPhidgetHandle) m_leftEncoder, &leftSerial);
         CPhidget_getSerialNumber((CPhidgetHandle) m_rightEncoder, &rightSerial);
@@ -122,6 +124,8 @@ void encoderAttach(const int which)
 	CPhidgetEncoder_setEnabled(m_leftEncoder, m_leftEncoderNumber, PTRUE);
 	CPhidgetEncoder_setEnabled(m_rightEncoder, m_rightEncoderNumber, PTRUE);
         m_encodersGood = true;
+
+	posdata_pub = n.advertise<corobot_msgs::PosMsg>("position_data", 100);
 
     }
 }
@@ -389,6 +393,7 @@ int interfacekit_simple()
 {
 	int result, num_analog_inputs, num_digital_inputs;
 	const char *err;
+	ros::NodeHandle n;
 
 	//create the InterfaceKit object
 	CPhidgetInterfaceKit_create(&ifKit);
@@ -398,29 +403,14 @@ int interfacekit_simple()
 	CPhidgetInterfaceKit_set_OnInputChange_Handler (ifKit, DigitalInputHandler, NULL);
 	CPhidgetInterfaceKit_set_OnSensorChange_Handler (ifKit, AnalogInputHandler, NULL);
 
-	//Initialize the phidget spatial board, if any
-	CPhidgetSpatial_create(&spatial);
-	CPhidget_set_OnError_Handler((CPhidgetHandle)spatial, ErrorHandler, NULL);
-	CPhidgetSpatial_set_OnSpatialData_Handler(spatial, SpatialDataHandler, NULL);
-
 
 	//open the interfacekit and spatial for device connections
 	CPhidget_open((CPhidgetHandle)ifKit, -1);
-	CPhidget_open((CPhidgetHandle)spatial, -1);
-
+	
 
 	CPhidgetInterfaceKit_getInputCount(ifKit, &num_digital_inputs);
 	CPhidgetInterfaceKit_getSensorCount(ifKit, &num_analog_inputs);
 
-
-	// attach the devices
-	printf("Waiting for spatial to be attached.... \n");
-	if((result = CPhidget_waitForAttachment((CPhidgetHandle)spatial, 1000)))
-	{
-		CPhidget_getErrorDescription(result, &err);
-		ROS_ERROR("Phidget Spatial: Problem waiting for attachment: %s\n", err);
-		spatialError = 1;
-	}
 
 	printf("Waiting for interface kit to be attached....");
 	if((result = CPhidget_waitForAttachment((CPhidgetHandle)ifKit, 1000)))
@@ -429,9 +419,42 @@ int interfacekit_simple()
 		ROS_ERROR("Phidget IK: Problem waiting for attachment: %s\n", err);
 		interfaceKitError = 1;
 	}
+	else
+	{
+        	irData_pub = n.advertise<corobot_msgs::SensorMsg>("infrared_data", 100);
+        	powerdata_pub = n.advertise<corobot_msgs::PowerMsg>("power_data", 100);
+        	bumper_pub = n.advertise<corobot_msgs::SensorMsg>("bumper_data", 100);
+        	other_pub = n.advertise<corobot_msgs::SensorMsg>("sensor_data", 100); // sensors connected to the phidget interface kit other than bumpers, voltage sensor, ir sensor and sonars. 
+	}	
 	
+
+	//Initialize the phidget spatial board, if any
+	if (imu)
+	{
+		CPhidgetSpatial_create(&spatial);
+		CPhidget_set_OnError_Handler((CPhidgetHandle)spatial, ErrorHandler, NULL);
+		CPhidgetSpatial_set_OnSpatialData_Handler(spatial, SpatialDataHandler, NULL);
+		CPhidget_open((CPhidgetHandle)spatial, -1);
+
+		// attach the devices
+		printf("Waiting for spatial to be attached.... \n");
+		if((result = CPhidget_waitForAttachment((CPhidgetHandle)spatial, 1000)))
+		{
+			CPhidget_getErrorDescription(result, &err);
+			ROS_ERROR("Phidget Spatial: Problem waiting for attachment: %s\n", err);
+			spatialError = 1;
+		}
+		else
+		{
+			imu_pub = n.advertise<sensor_msgs::Imu>("imu_data",100);
+			mag_pub = n.advertise<sensor_msgs::MagneticField>("magnetic_data",100);
+		}
+
+		CPhidgetSpatial_setDataRate(spatial, 16);
+	}
+
 	CPhidgetInterfaceKit_setRatiometric(ifKit, 0);
-	CPhidgetSpatial_setDataRate(spatial, 16);	
+		
 
 	// create and attach the encoders
 	 CPhidgetEncoder_create(&m_leftEncoder);
@@ -448,6 +471,8 @@ int interfacekit_simple()
 		ros::Duration(0.002).sleep(); // sleep for 2ms
 		CPhidgetInterfaceKit_setOutputState(ifKit, strobeOutput, 0);
 		ros::Duration(0.150).sleep(); // sleep for 150ms
+
+		sonar_pub = n.advertise<corobot_msgs::SensorMsg>("sonar_data", 100);
 	}
 	return 0;
 }
@@ -515,6 +540,7 @@ int main(int argc, char* argv[])
 	nh.param("irBack", irBackPort, 2); //index of the back ir sensor
 	nh.param("motors_inverted", motors_inverted, false);
 	nh.param("encoders_inverted", encoders_inverted, false);
+	nh.param("imu", imu, true);
 
 	//create an updater that will send information on the diagnostics topics
 	diagnostic_updater::Updater updater;
@@ -523,26 +549,18 @@ int main(int argc, char* argv[])
 	updater.add("Spatial", phidget_spatial_diagnostic); //function that will be executed with updater.update()
 	updater.add("Encoders", phidget_encoder_diagnostic); //function that will be executed with updater.update()
 	
-	posdata_pub = n.advertise<corobot_msgs::PosMsg>("position_data", 100);
-        irData_pub = n.advertise<corobot_msgs::SensorMsg>("infrared_data", 100);
-        powerdata_pub = n.advertise<corobot_msgs::PowerMsg>("power_data", 100);
-        bumper_pub = n.advertise<corobot_msgs::SensorMsg>("bumper_data", 100);
-        sonar_pub = n.advertise<corobot_msgs::SensorMsg>("sonar_data", 100);
-	imu_pub = n.advertise<sensor_msgs::Imu>("imu_data",100);
-	mag_pub = n.advertise<sensor_msgs::MagneticField>("magnetic_data",100);
-        other_pub = n.advertise<corobot_msgs::SensorMsg>("sensor_data", 100); // sensors connected to the phidget interface kit other than bumpers, voltage sensor, ir sensor and sonars. 
 
 	interfacekit_simple();
 
 	while (ros::ok())
-    {
-        ros::spinOnce(); // ROS loop
+    	{
+        	ros::spinOnce(); // ROS loop
         
 		if(sonarsPresent) // acquire new sonar data if sonar sensors are present
 			sendSonarResult();
 		publish_encoder(); // acquire and publish encoder data
 		updater.update(); //update diagnostics
-    }
+    	}
 
 	
 	// close all the phidget devices
@@ -555,9 +573,12 @@ int main(int argc, char* argv[])
 	}
 	CPhidget_close((CPhidgetHandle)m_rightEncoder);
 	CPhidget_delete((CPhidgetHandle)m_rightEncoder);
-	CPhidget_close((CPhidgetHandle)spatial);
-	CPhidget_delete((CPhidgetHandle)spatial);
-
+	
+	if (imu)
+	{
+		CPhidget_close((CPhidgetHandle)spatial);
+		CPhidget_delete((CPhidgetHandle)spatial);
+	}
 
 	return 0;
 }

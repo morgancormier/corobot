@@ -12,4 +12,5 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(joystick_control src/joystick_control.cpp)
 target_link_libraries(joystick_control ${catkin_LIBRARIES})
+add_dependencies(joystick_control corobot_msgs_gencpp)
 

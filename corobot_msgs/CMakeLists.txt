@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(corobot_msgs)
 
 find_package(catkin REQUIRED
-    COMPONENTS message_generation std_msgs sensor_msgs)
+    COMPONENTS message_generation std_msgs sensor_msgs genmsg)
 
   # Declare the message files to be built
   add_message_files(FILES

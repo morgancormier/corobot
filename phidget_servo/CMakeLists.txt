@@ -12,4 +12,5 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(phidget_servo src/PhidgetServo.cpp)
 target_link_libraries(phidget_servo phidget21)
-target_link_libraries(phidget_servo ${catkin_LIBRARIES}) 
+target_link_libraries(phidget_servo ${catkin_LIBRARIES})
+add_dependencies(phidget_servo corobot_msgs_gencpp) 

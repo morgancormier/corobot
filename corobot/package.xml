@@ -40,12 +40,13 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>corobot_msgs</run_depend>
   <run_depend>corobot_arm</run_depend>
   <run_depend>corobot_camera</run_depend>
   <run_depend>corobot_gps</run_depend>
   <run_depend>corobot_joystick</run_depend>
   <run_depend>corobot_map_to_jpeg</run_depend>
-  <run_depend>corobot_msgs</run_depend>
   <run_depend>corobot_pantilt</run_depend>
   <run_depend>corobot_phidget_ik</run_depend>
   <run_depend>corobot_ssc32</run_depend>
@@ -53,6 +54,7 @@
   <run_depend>corobot_teleop</run_depend>
   <run_depend>phidget_motor</run_depend>
   <run_depend>phidget_servo</run_depend>
+  <run_depend>corobot_launch</run_depend>
 
 
 

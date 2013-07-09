@@ -1,0 +1,82 @@
+<launch>
+
+<!--***** Rear Camera *****-->
+
+<arg name="RearCamera" value="0"/> <!-- 1 if you have one rear camera, 0 if you don't -->
+<arg name="cameraRear_mjpeg_stream" value="1"/> <!-- 1 if you want to enable the mjpeg_stream, 0 to unable it. If enable, the camera will send mjpeg stream to the usb instead of raw rgb images. This saves usb bandwidth, but add some computational need-->
+<arg name="cameraRear_jpeg_compression" value="1"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it -->
+<arg name="cameraRear_port" value="/dev/video1"/> <!-- port of the camera -->
+<arg name="cameraRear_parameter_file" value="$(find corobot_camera)/camera_parameters/quickcam_pro_9000.txt"/> <!-- parameter file of the camera -->
+<arg name="cameraRear_topic" value="/REAR/image_raw"/> <!-- Topic where the images will be send on -->
+<arg name="cameraRear_width" value="640"/> <!-- Width of the images -->
+<arg name="cameraRear_height" value="480"/> <!-- Height of the images -->
+<arg name="cameraRear_immediately" value="true"/> <!-- if true starts the camera immediately, if false requires a manual start-->
+<arg name="cameraRear_fps" value="15"/> <!-- Number of images per second received from the camera-->
+<arg name="cameraRear_JpegQuality" value="30"/> <!-- JPEG quality, if 100 high quality, if 0 very bad quality -->
+
+
+
+
+<!--***** Front Camera *****-->
+
+<arg name="FrontCamera" value="1"/> <!-- 1 if you have one front camera, 0 if you don't -->
+<arg name="cameraFront_mjpeg_stream" value="1"/> <!-- 1 if you want to enable the mjpeg_stream, 0 to unable it. If enable, the camera will send mjpeg stream to the usb instead of raw rgb images. This saves usb bandwidth, but add some computational need-->
+<arg name="cameraFront_jpeg_compression" value="1"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it -->
+<arg name="cameraFront_pantilt" value="0"/> <!-- 1 if you have the front camera is pan tilt, 0 if you don't -->
+<arg name="cameraFront_port" value="/dev/video0"/> <!-- port of the camera -->
+<arg name="cameraFront_parameter_file" value="$(find corobot_camera)/camera_parameters/quickcam_pro_9000.txt"/> <!-- parameter file of the camera -->
+<arg name="cameraFront_topic" value="/PTZ/image_raw"/> <!-- Topic where the images will be send on -->
+<arg name="cameraFront_width" value="640"/> <!-- Width of the images -->
+<arg name="cameraFront_height" value="480"/> <!-- Height of the images -->
+<arg name="cameraFront_immediately" value="true"/> <!-- if true starts the camera immediately, if false requires a manual start-->
+<arg name="cameraFront_fps" value="10"/> <!-- Number of images per second received from the camera-->
+<arg name="cameraFront_JpegQuality" value="50"/> <!-- JPEG quality, if 100 high quality, if 0 very bad quality -->
+
+
+
+
+
+
+
+<group if="$(arg FrontCamera)">
+	  <param name="PTZ/image_raw/compressed/jpeg_quality" type="int" value="$(arg cameraFront_JpegQuality)"/>
+
+	  <node pkg="corobot_camera" name="PTZcamera" type="dynamic_sender" ns="/PTZ">
+		<param name="device" value="$(arg cameraFront_port)"/>
+		<param name="camera_parameter_file" value="$(arg cameraFront_parameter_file)" />
+		<param name="topic" value="$(arg cameraFront_topic)" />
+		<param name="width" value="$(arg cameraFront_width)" />
+		<param name="height" value="$(arg cameraFront_height)" />
+		<param name="immediately" value="$(arg cameraFront_immediately)" />
+		<param name="fps" value="$(arg cameraFront_fps)" />
+		<param name="isjpeg" value="$(arg cameraFront_mjpeg_stream)" />
+
+	  </node>
+	
+
+	  <group if="$(arg cameraFront_pantilt)">
+	  	<node pkg="corobot_pantilt" name="PTZcontrol" type="corobot_pantilt">
+			<param name="device" value="$(arg cameraFront_port)"/>
+			<param name="script_path" value="$(find corobot_pantilt)/src/init_camera.sh"/>
+		</node>
+	  </group>
+  </group>
+
+
+  <group if="$(arg RearCamera)">
+	  <param name="REAR/image_raw/compressed/jpeg_quality" type="int" value="$(arg cameraRear_JpegQuality)" />
+
+	  <node pkg="corobot_camera" name="REARcamera" type="dynamic_sender" ns="/REAR">
+		<param name="device" value="$(arg cameraRear_port)"/>
+		<param name="camera_parameter_file" value="$(arg cameraRear_parameter_file)" />
+		<param name="topic" value="$(arg cameraRear_topic)" />
+		<param name="width" value="$(arg cameraRear_width)" />
+		<param name="height" value="$(arg cameraRear_height)" />
+		<param name="immediately" value="$(arg cameraRear_immediately)" />
+		<param name="fps" value="$(arg cameraRear_fps)" />
+		<param name="isjpeg" type="bool" value="$(arg cameraRear_mjpeg_stream)" />
+	  </node>
+  </group>
+
+
+</launch>

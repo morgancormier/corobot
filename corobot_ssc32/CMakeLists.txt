@@ -11,3 +11,4 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(ssc32_motor src/motor.cpp src/ssc32.cpp)
 target_link_libraries(ssc32_motor ${catkin_LIBRARIES})
+add_dependencies(ssc32_motor corobot_msgs_gencpp)

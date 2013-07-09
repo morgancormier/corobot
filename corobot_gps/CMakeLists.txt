@@ -13,4 +13,5 @@ include_directories(${catkin_INCLUDE_DIRS})
 add_executable(corobot_gps src/client.cpp)
 target_link_libraries(corobot_gps ${catkin_LIBRARIES})
 target_link_libraries(corobot_gps gps)
+add_dependencies(corobot_gps corobot_msgs_gencpp)
 

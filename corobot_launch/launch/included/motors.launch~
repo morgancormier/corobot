@@ -1,0 +1,19 @@
+<launch>
+
+<!--***** Phidget Motor Controller *****-->
+
+<arg name="PhidgetMotorController" value="1"/> <!-- 1 if you have the Phidget Motor Controller, 0 if you don't -->
+<arg name="motors_inverted" value="0"/> <!-- 1 if you want to invert the motors, 0 if not. This is used only in the case where the robot can turn properly but the forward and backward movement are inverted (by testing in the corobot_teleop package for example). It also invert the encoders at the same time-->
+
+
+
+
+
+  <group if="$(arg PhidgetMotorController)">
+    <node pkg="phidget_motor" name="phidget_motor" type="PhidgetMotor.py" args="">
+	<param name="motors_inverted" type="bool" value="$(arg motors_inverted)"/>
+    </node>
+  </group>
+
+
+</launch>
