@@ -11,6 +11,7 @@ __version__ = '1'
 
 import roslib; roslib.load_manifest('phidget_motor')
 from corobot_msgs.msg import *
+from std_msgs.msg import *
 import rospy
 from  threading import Timer
 from ctypes import *
@@ -31,6 +32,8 @@ minSpeed = -100 # minimum speed that can be send to the phidget device
 maxSpeed = 100 # maximum speed that can be send to the phidget device
 timer = 0 # timer used to stop the motors after the number of seconds given in the message. This is interesting in case communication with a controlling computer is lost. 
 posdataPub = 0 # publish encoder data if we have phidget 1065 device
+leftEnconderPub = 0# publish left encoder data if we have phidget 1065 device
+rightEnconderPub = 0# publish right encoder data if we have phidget 1065 device
 leftPosition = 0 # value of the left encoder, if we have a 1065
 rightPosition = 0 # value of the right encoder, if we have a 1065
 
@@ -135,27 +138,84 @@ def move(request):
         timer.start()
     return(True)
 
+
+def left_move(request):
+    """move the left wheel as requested. This function doesn't use timer, and doesn't setup acceleration. 
+       However it is used by the differential drive package to be able to command the robot with twist messages.
+    """
+    leftSpeed = float(request.data)
+
+    if leftSpeed < minSpeed:
+        leftSpeed = float(minSpeed)
+    elif leftSpeed > maxSpeed:
+        leftSpeed = float(maxSpeed)
+
+
+    # set the velocity
+    try:
+        motorControl.setVelocity(leftWheels, leftSpeed);
+
+    except PhidgetException as e:
+        rospy.logerr("Failed in setVelocity() %i: %s", e.code, e.details)
+        return(False)
+
+    return(True)
+
+
+def right_move(request):
+    """move the right wheel as requested. This function doesn't use timer, and doesn't setup acceleration. 
+       However it is used by the differential drive package to be able to command the robot with twist messages.
+    """
+
+    rightSpeed = float(request.data)
+
+    if rightSpeed < minSpeed:
+        rightSpeed = float(minSpeed)
+    elif rightSpeed > maxSpeed:
+        rightSpeed = float(maxSpeed)
+
+
+    # set the velocity
+    try:
+        if phidget1065 == True:
+            motorControlRight.setVelocity(rightWheels, rightSpeed);
+        else:
+            motorControl.setVelocity(rightWheels, rightSpeed);
+
+    except PhidgetException as e:
+        rospy.logerr("Failed in setVelocity() %i: %s", e.code, e.details)
+        return(False)
+
+    return(True)
+
+
 def mcAttached(e):
     return
+
 
 def mcDetached(e):
     return
 
+
 def mcError(e):
     return
+
 
 def mcCurrentChanged(e):
     return
 
+
 def mcInputChanged(e):
     return
+
 
 def mcVelocityChanged(e):
     return
 
+
 def leftEncoderUpdated(e):
     # left encoder callback, used with phidget 1065 devices
-    global leftPosition, rightPosition
+    global leftPosition, rightPosition, posdataPub, leftEnconderPub
 	
     leftPosition += e.positionChange
     if motorControlRight:
@@ -168,11 +228,16 @@ def leftEncoderUpdated(e):
     msg.header.stamp = rospy.Time.now()
     posdataPub.publish(msg)
 
+    #publish the same data as an Int, more more conveniency
+    msg = Int16Msg()
+    msg.data = leftPosition
+    leftEncoderPub.publish(msg)
+
     return
 
 def rightEncoderUpdated(e):
     # right encoder callback, used with phidget 1065 devices
-    global leftPosition, rightPosition
+    global leftPosition, rightPosition, posdataPub, rightEnconderPub
 
     rightPosition += e.positionChange
     if motorControl:
@@ -185,7 +250,13 @@ def rightEncoderUpdated(e):
     msg.header.stamp = rospy.Time.now()
     posdataPub.publish(msg)
 
+    #publish the same data as an Int, more more conveniency
+    msg = Int16Msg()
+    msg.data = rightPosition
+    rightEncoderPub.publish(msg)
+
     return
+
 
 def setupMoveService():
     """Initialize the PhidgetMotor service
@@ -200,7 +271,7 @@ def setupMoveService():
             log_level = rospy.DEBUG
             )
 
-    global motorControl, motorControlRight, minAcceleration, maxAcceleration, timer, motors_inverted, phidget1065, rightWheels, posdataPub
+    global motorControl, motorControlRight, minAcceleration, maxAcceleration, timer, motors_inverted, phidget1065, rightWheels, posdataPub, leftEnconderPub, rightEnconderPub
     timer = 0
     try:
         motorControl = MotorControl()
@@ -280,8 +351,13 @@ def setupMoveService():
     motors_inverted = rospy.get_param('~motors_inverted', False)
 
     phidgetMotorTopic = rospy.Subscriber("PhidgetMotor", MotorCommand ,move)
+    leftWheelTopic = rospy.Subscriber("lmotor_cmd", Float32 ,left_move) # topic used for differential_drive package to enable twist commands
+    rightWheelTopic = rospy.Subscriber("rmotor_cmd", Float32 ,right_move)# topic used for differential_drive package to enable twist commands
+
     if phidget1065 == True:
         posdataPub = rospy.Publisher("position_data", PosMsg)
+        leftEnconderPub = rospy.Publisher("lwheel", Int16)
+        rightEncoderPub = rospy.Publisher("rwheel", Int16)
     rospy.spin()
 
 if __name__ == "__main__":

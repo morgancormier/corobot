@@ -11,6 +11,7 @@
 #include "corobot_msgs/SensorMsg.h"
 #include "sensor_msgs/MagneticField.h"
 #include "sensor_msgs/Imu.h"
+#include "std_msgs/Int16.h"
 #include <phidget21.h>
 #include <tf/transform_datatypes.h>
 #include <diagnostic_updater/diagnostic_updater.h>
@@ -30,7 +31,7 @@ bool m_rearBumperPresent = false; // tells if the rear Bumper is present on the 
 bool sonarsPresent = false; //tells if some sonars are connected
 bool imu = true; //tells if the imu are connected
 
-ros::Publisher posdata_pub,powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub; //topics where we want to publish to
+ros::Publisher posdata_pub,powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub, left_encoder_pub, right_encoder_pub; //topics where we want to publish to
 	
 
 int bwOutput = -1; //Output bw for the sonars. -1 if no sonars are present
@@ -126,6 +127,8 @@ void encoderAttach(const int which)
         m_encodersGood = true;
 
 	posdata_pub = n.advertise<corobot_msgs::PosMsg>("position_data", 100);
+	left_encoder_pub = n.advertise<std_msgs::Int16>("lwheel", 100);
+	right_encoder_pub = n.advertise<std_msgs::Int16>("rwheel", 100);
 
     }
 }
@@ -217,6 +220,16 @@ int publish_encoder(){
 
 	posdata.header.stamp = ros::Time::now();
         posdata_pub.publish(posdata);
+
+	// Send the encoder data as two Int16 topics for more conveniency.
+	std_msgs::Int16 msg;
+
+	msg.data = posdata.px;
+	left_encoder_pub.publish(msg);
+
+	msg.data = posdata.py;
+	right_encoder_pub.publish(msg);
+
 	encoderError = 0;
     }
     else
