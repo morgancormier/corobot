@@ -1,5 +1,13 @@
 <launch>
 
+<!--***** ROBOT *****-->
+
+<!-- Note that it is assumed that if you don't have an explorer or a corobot 4 wheel drive you have a corobot 2 wheel drive -->
+<arg name="Explorer" value="0"/> <!-- 1 if you have a Corobot Explorer, 0 if you have a Corobot Classic -->
+<arg name="Corobot4WD" value="0"/> <!-- 1 if you have a Corobot with 4 Wheel Drive -->
+
+
+
 <!--***** Phidget Interface Kit *****-->
 
 <arg name="phidgetInterfaceKit" value="1"/> <!-- 1 if you have the Phidget Interface Kit, 0 if you don't -->
@@ -23,7 +31,7 @@
 
 
 <group if="$(arg phidgetInterfaceKit)">
-  	<node pkg="corobot_phidget_ik" name="phidget_interface_kit" type="corobot_phidget">
+  	<node pkg="corobot_phidget_ik" name="phidget_interface_kit" type="corobot_phidget" output="screen">
     		<param name="rearBumper" type="bool" value="$(arg rearBumper)"/>
 		<param name="bwOutput" type="int" value="$(arg bwOutput)"/>
 		<param name="strobeOutput" type="int" value="$(arg strobeOutput)"/>

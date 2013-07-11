@@ -43,7 +43,7 @@ void WheelCallback(const corobot_msgs::PosMsg::ConstPtr& pos)
 
   //current_time_encoder = ros::Time::now();
   dela_time = (current_time_encoder - last_time_encoder).toSec();
-  if (dela_time>0.01){
+  if (dela_time>0.001){
 	  if(firstTime == false)
 	  { 
     	    distance_left = ((double)(pos->px - _PreviousLeftEncoderCounts) * DistancePerCount); //distance made by the left wheel

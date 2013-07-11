@@ -6,7 +6,7 @@
 <arg name="motors_inverted" value="0"/> <!-- 1 if you want to invert the motors, 0 if not. This is used only in the case where the robot can turn properly but the forward and backward movement are inverted (by testing in the corobot_teleop package for example). It also invert the encoders at the same time-->
 
 
-<arg name="twistCommand" value="1"/> <!-- 1 if you want to enable commanding the robot with twist messages, 0 if you don't -->
+<arg name="twistCommand" value="0"/> <!-- 1 if you want to enable commanding the robot with twist messages, 0 if you don't -->
 
 
 
