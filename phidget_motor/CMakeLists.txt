@@ -5,4 +5,4 @@ find_package(catkin REQUIRED)
 
 catkin_package(
    LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS rospy)
+   CATKIN_DEPENDS rospy )

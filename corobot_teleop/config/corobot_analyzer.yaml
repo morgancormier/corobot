@@ -15,11 +15,6 @@ analyzers:
         path: Spatial 
         contains: Spatial
         remove_prefix: phidget_interface_kit
-      Encoders:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: Encoders 
-        contains: Encoders
-        remove_prefix: phidget_interface_kit
       Servos:
         type: diagnostic_aggregator/GenericAnalyzer
         path: Servos

@@ -252,7 +252,7 @@ void Ros::kinectrgbCallback(const sensor_msgs::CompressedImage::ConstPtr& msg){
 // Odometry message callback
 void Ros::velocityCallback(const nav_msgs::Odometry::ConstPtr& msg){
     double linear, angular;
-    linear = msg->twist.twist.linear.x;
+    linear = sqrt(msg->twist.twist.linear.x *msg->twist.twist.linear.x + msg->twist.twist.linear.y * msg->twist.twist.linear.y);
     angular = msg->twist.twist.angular.z;
 
     emit velocity_info(linear,angular);
