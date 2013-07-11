@@ -17,21 +17,17 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
 
-CPhidgetEncoderHandle m_rightEncoder;
-CPhidgetEncoderHandle m_leftEncoder;
+
 CPhidgetInterfaceKitHandle ifKit = 0;
 CPhidgetSpatialHandle spatial = 0;
 
 Orientation orientation_calculation;
 
-bool m_encoder1Seen=false, m_encoder2Seen=false,m_encodersGood = false;//useful to set up the phidget
-int m_leftEncoderNumber,m_rightEncoderNumber;
-
 bool m_rearBumperPresent = false; // tells if the rear Bumper is present on the robot or not.
 bool sonarsPresent = false; //tells if some sonars are connected
 bool imu = true; //tells if the imu are connected
 
-ros::Publisher posdata_pub,powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub, left_encoder_pub, right_encoder_pub; //topics where we want to publish to
+ros::Publisher powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub; //topics where we want to publish to
 	
 
 int bwOutput = -1; //Output bw for the sonars. -1 if no sonars are present
@@ -42,13 +38,9 @@ int batteryPort = 0;
 int irFrontPort = 1;
 int irBackPort = 2;
 
-bool motors_inverted; //specify if the wiring of the robot (motors + encoders) has been inverted
-bool encoders_inverted; //specify if the wiring of the encoders has been inverted
-
-int interfaceKitError = 0, spatialError = 0, encoderError = 0; //for diagnostics purpose
+int interfaceKitError = 0, spatialError = 0; //for diagnostics purpose
 
 
-int RightEncoderAttach(CPhidgetHandle phid, void *userPtr);
 
 
 int ErrorHandler(CPhidgetHandle IFK, void *userptr, int ErrorCode, const char *unknown)
@@ -57,100 +49,7 @@ int ErrorHandler(CPhidgetHandle IFK, void *userptr, int ErrorCode, const char *u
 	return 0;
 }
 
-void encoderAttach(const int which)
-        /**
-         * @brief function that handles registering the an encoder has been attached
-         * @param which indicates which encoder was seen (1 or 2)
-         **/
-{
-    if (which == 1)
-    {
-	ros::NodeHandle n;
-	posdata_pub = n.advertise<corobot_msgs::PosMsg>("position_data", 100);
-	left_encoder_pub = n.advertise<std_msgs::Int16>("lwheel", 100);
-	right_encoder_pub = n.advertise<std_msgs::Int16>("rwheel", 100);
 
-        m_encoder1Seen = true;
-        // this could either be the left encoder board, or it's a single board that
-        // supports both encoders. Check how many inputs it has
-        int count;
-        CPhidgetEncoder_getEncoderCount(m_leftEncoder, &count);
-        if (count > 1)
-        {
-            // we have only one board that supports both motor encoders
-            m_leftEncoderNumber = 0;
-            m_rightEncoderNumber = 1;
-		
-            if(motors_inverted || encoders_inverted){
-            	m_leftEncoderNumber = 1;
-            	m_rightEncoderNumber = 0;
-	    }
-		
-            m_rightEncoder = m_leftEncoder;
-            m_encoder2Seen = true;
-            m_encodersGood = true;
-        }
-        else
-        {
-            m_leftEncoderNumber = 0;
-            m_rightEncoderNumber = 0;
-            // open the second encoder (assume it's the right one)
-            CPhidgetEncoder_create(&m_rightEncoder);
-            CPhidget_set_OnAttach_Handler((CPhidgetHandle) m_rightEncoder,
-                                          RightEncoderAttach, NULL);
-            CPhidget_open((CPhidgetHandle) m_rightEncoder, -1);
-        }
-    }
-    else
-    {
-        m_encoder2Seen = true;
-    }
-    // have we seen both of the encoders?
-    if (m_encoder1Seen && m_encoder2Seen)
-    {
-        // now check the assumption we have the encoders correct
-        int leftSerial;
-        int rightSerial;
-
-        CPhidget_getSerialNumber((CPhidgetHandle) m_leftEncoder, &leftSerial);
-        CPhidget_getSerialNumber((CPhidgetHandle) m_rightEncoder, &rightSerial);
-
-        if (leftSerial > rightSerial)
-        {
-            // oops, we go them backwards so swap them
-            CPhidgetEncoderHandle tempEncoder = m_leftEncoder;
-            m_leftEncoder = m_rightEncoder;
-            m_rightEncoder = tempEncoder;
-
-            int tempNumber = m_leftEncoderNumber;
-            m_leftEncoderNumber = m_rightEncoderNumber;
-            m_rightEncoderNumber = tempNumber;
-        }
-	CPhidgetEncoder_setEnabled(m_leftEncoder, m_leftEncoderNumber, PTRUE);
-	CPhidgetEncoder_setEnabled(m_rightEncoder, m_rightEncoderNumber, PTRUE);
-        m_encodersGood = true;
-
-    }
-}
-/**
- * @brief callback invoked automatically when the right encoder is detected
-
- **/
-int RightEncoderAttach(CPhidgetHandle phid, void *userPtr)
-
-{
-	encoderAttach(2);
-	return 0;
-}
-/**
- * @brief callback invoked automatically when the left encoder is detected
- **/
-int LeftEncoderAttach(CPhidgetHandle phid, void *userPtr)
-
-{
-	encoderAttach(1);
-	return 0;
-}
 
 /** @brief Description:
 Convert a voltage from the Phidgets 8/8/8 board into a distance, for the Infrared sensors
@@ -172,76 +71,6 @@ static float irVoltageToDistance(float volts)
   return distanceInCm/100.0;
 }
 
-
-/**
- * @brief Publish the encoder data on the topic
- */
-int publish_encoder(){
-
-
-    if(m_encodersGood) //encoder data
-    {
-        corobot_msgs::PosMsg posdata;
-
-        // prepare to read the encoder status
-        int phidgetEncoderStatus = 0;
-
-        CPhidget_getDeviceStatus((CPhidgetHandle) m_leftEncoder,
-                                 &phidgetEncoderStatus);
-        if (phidgetEncoderStatus != 0)
-        {
-            int value;
-
-            CPhidgetEncoder_getPosition(m_leftEncoder, m_leftEncoderNumber, &value);
-                    posdata.px = -value;
-	    printf("Left encoder value = %d", value);
-
-        }
-	else
-	{
-	    encoderError = 2;
-	}
-        phidgetEncoderStatus = 0;
-        CPhidget_getDeviceStatus((CPhidgetHandle) m_rightEncoder,
-                                 &phidgetEncoderStatus);
-        if (phidgetEncoderStatus != 0)
-        {
-            int value;
-
-            CPhidgetEncoder_getPosition(m_rightEncoder, m_rightEncoderNumber, &value);
-            // we negate this value since the right side motors turn the opposite direction
-            // to the left side
-                    posdata.py = value;
-        }
-	else
-	{
-	    encoderError = 2;
-	}
-
-	posdata.header.stamp = ros::Time::now();
-	if (posdata_pub)
-        	posdata_pub.publish(posdata);
-
-	// Send the encoder data as two Int16 topics for more conveniency.
-	std_msgs::Int16 msg;
-
-	msg.data = posdata.px;
-	if(left_encoder_pub)
-		left_encoder_pub.publish(msg);
-
-	msg.data = posdata.py;
-	if(right_encoder_pub)
-		right_encoder_pub.publish(msg);
-
-	encoderError = 0;
-    }
-    else
-    {
-	encoderError = 1;
-    }
-
-    return 0;
-}
 
 /** 
  * @Brief Voltage to distance function that is used for the sonar sensors
@@ -472,12 +301,6 @@ int interfacekit_simple()
 	}
 
 	CPhidgetInterfaceKit_setRatiometric(ifKit, 0);
-		
-
-	// create and attach the encoders
-	 CPhidgetEncoder_create(&m_leftEncoder);
-         CPhidget_set_OnAttach_Handler((CPhidgetHandle) m_leftEncoder,LeftEncoderAttach, NULL);
-         CPhidget_open((CPhidgetHandle) m_leftEncoder, -1);
 
 	//Initialize the sonars, if any are present
 	if(sonarsPresent)
@@ -523,26 +346,6 @@ void phidget_spatial_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &sta
 	}
 }
 
-void phidget_encoder_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
-/**
- * Function that will report the status of the hardware to the diagnostic topic
- */
-{
-	if (!encoderError)  
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "intialized");
-	else if(encoderError == 1)
-	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot be attached");
-		stat.addf("Recommendation", "Please verify that the robot has a Phidget Encoder board. If present, please unplug and replug the Phidget Spatial Board USB cable from the Motherboard.");
-	}
-	else if(encoderError == 2)
-	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot read");
-		stat.addf("Recommendation", "Please verify that the two encoders are connected to the Phidget Encoder Board.");
-	}
-
-}
-
 int main(int argc, char* argv[])
 {
 	ros::init(argc, argv, "phidget_component");
@@ -556,17 +359,13 @@ int main(int argc, char* argv[])
 	nh.param("battery", batteryPort, 0); //index of the battery voltage sensor
 	nh.param("irFront", irFrontPort, 1); // index of the front ir sensor
 	nh.param("irBack", irBackPort, 2); //index of the back ir sensor
-	nh.param("motors_inverted", motors_inverted, false);
-	nh.param("encoders_inverted", encoders_inverted, false);
 	nh.param("imu", imu, true);
 
 	//create an updater that will send information on the diagnostics topics
 	diagnostic_updater::Updater updater;
 	updater.setHardwareIDf("Phidget");
 	updater.add("Interface Kit", phidget_ik_diagnostic); //function that will be executed with updater.update()
-	updater.add("Spatial", phidget_spatial_diagnostic); //function that will be executed with updater.update()
-	updater.add("Encoders", phidget_encoder_diagnostic); //function that will be executed with updater.update()
-	
+	updater.add("Spatial", phidget_spatial_diagnostic); //function that will be executed with updater.update()	
 
 	interfacekit_simple();
 
@@ -576,7 +375,6 @@ int main(int argc, char* argv[])
         
 		if(sonarsPresent) // acquire new sonar data if sonar sensors are present
 			sendSonarResult();
-		publish_encoder(); // acquire and publish encoder data
 		updater.update(); //update diagnostics
     	}
 
@@ -584,13 +382,6 @@ int main(int argc, char* argv[])
 	// close all the phidget devices
 	CPhidget_close((CPhidgetHandle)ifKit);
 	CPhidget_delete((CPhidgetHandle)ifKit);
-	if (m_rightEncoder != m_leftEncoder)
-	{
-		CPhidget_close((CPhidgetHandle)m_leftEncoder);
-		CPhidget_delete((CPhidgetHandle)m_leftEncoder);
-	}
-	CPhidget_close((CPhidgetHandle)m_rightEncoder);
-	CPhidget_delete((CPhidgetHandle)m_rightEncoder);
 	
 	if (imu)
 	{
