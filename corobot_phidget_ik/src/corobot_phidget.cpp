@@ -65,6 +65,11 @@ void encoderAttach(const int which)
 {
     if (which == 1)
     {
+	ros::NodeHandle n;
+	posdata_pub = n.advertise<corobot_msgs::PosMsg>("position_data", 100);
+	left_encoder_pub = n.advertise<std_msgs::Int16>("lwheel", 100);
+	right_encoder_pub = n.advertise<std_msgs::Int16>("rwheel", 100);
+
         m_encoder1Seen = true;
         // this could either be the left encoder board, or it's a single board that
         // supports both encoders. Check how many inputs it has
@@ -106,7 +111,6 @@ void encoderAttach(const int which)
         // now check the assumption we have the encoders correct
         int leftSerial;
         int rightSerial;
-	ros::NodeHandle n;
 
         CPhidget_getSerialNumber((CPhidgetHandle) m_leftEncoder, &leftSerial);
         CPhidget_getSerialNumber((CPhidgetHandle) m_rightEncoder, &rightSerial);
@@ -125,10 +129,6 @@ void encoderAttach(const int which)
 	CPhidgetEncoder_setEnabled(m_leftEncoder, m_leftEncoderNumber, PTRUE);
 	CPhidgetEncoder_setEnabled(m_rightEncoder, m_rightEncoderNumber, PTRUE);
         m_encodersGood = true;
-
-	posdata_pub = n.advertise<corobot_msgs::PosMsg>("position_data", 100);
-	left_encoder_pub = n.advertise<std_msgs::Int16>("lwheel", 100);
-	right_encoder_pub = n.advertise<std_msgs::Int16>("rwheel", 100);
 
     }
 }
@@ -219,16 +219,19 @@ int publish_encoder(){
 	}
 
 	posdata.header.stamp = ros::Time::now();
-        posdata_pub.publish(posdata);
+	if (posdata_pub)
+        	posdata_pub.publish(posdata);
 
 	// Send the encoder data as two Int16 topics for more conveniency.
 	std_msgs::Int16 msg;
 
 	msg.data = posdata.px;
-	left_encoder_pub.publish(msg);
+	if(left_encoder_pub)
+		left_encoder_pub.publish(msg);
 
 	msg.data = posdata.py;
-	right_encoder_pub.publish(msg);
+	if(right_encoder_pub)
+		right_encoder_pub.publish(msg);
 
 	encoderError = 0;
     }
@@ -274,18 +277,18 @@ int DigitalInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index,
 	corobot_msgs::SensorMsg msg;
     	msg.value = ((State == PTRUE)?1:0);
     	msg.index = Index;
-
-	if (Index <= 3 && m_rearBumperPresent == true) //Bumper sensor, front or rear
+	
+	if (Index <= 3 && m_rearBumperPresent == true && bumper_pub) //Bumper sensor, front or rear
 	{
         	msg.type = msg.BUMPER;
 		bumper_pub.publish(msg);
 	}
-	else if (Index <= 1) //Bumper sensor, front 
+	else if (Index <= 1 && bumper_pub) //Bumper sensor, front 
 	{
 		msg.type = msg.BUMPER;
 		bumper_pub.publish(msg);
 	}
-	else // we don't know what it is but we publish
+	else if(other_pub) // we don't know what it is but we publish
 	{
 		msg.type = msg.OTHER;
 		other_pub.publish(msg);
@@ -304,7 +307,7 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
 
 
         
-    if(batteryPort == Index) //// Update power data
+    if(batteryPort == Index && powerdata_pub) //// Update power data
     {
         corobot_msgs::PowerMsg powerdata;
         powerdata.volts = (float) (Value - 500) * 0.0734;
@@ -314,7 +317,7 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
         powerdata_pub.publish(powerdata);
     }
 
-    else if(irFrontPort == Index) // Update IR data
+    else if(irFrontPort == Index && irData_pub) // Update IR data
     {
 	corobot_msgs::SensorMsg data;
 	data.type = data.INFRARED_FRONT;
@@ -324,7 +327,7 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
         irData_pub.publish(data);
     }
         
-    else if(irBackPort == Index) // Update IR data
+    else if(irBackPort == Index && irData_pub) // Update IR data
     {
         corobot_msgs::SensorMsg data;
         data.type = data.INFRARED_REAR;
@@ -333,7 +336,7 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
         data.value = irVoltageToDistance((float) Value  / 200.0);
 	irData_pub.publish(data);
     }
-    else if(Index >= firstSonarInput && Index <= lastSonarInput)//sonar
+    else if(Index >= firstSonarInput && Index <= lastSonarInput && sonar_pub)//sonar
     {
 	corobot_msgs::SensorMsg data;
         data.type = data.ULTRASOUND;
@@ -343,7 +346,7 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
 	sonar_pub.publish(data);
     }
     
-    else // We don't know what sensor it is, but we publish
+    else if(other_pub) // We don't know what sensor it is, but we publish
     {
         corobot_msgs::SensorMsg data;
 	data.type = data.OTHER;
@@ -390,8 +393,10 @@ int SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr, CPhidgetSpa
 		mag.magnetic_field.y = data[i]->magneticField[1];
 		mag.magnetic_field.z = data[i]->magneticField[2];
 
-		imu_pub.publish(imu);
-		mag_pub.publish(mag);
+		if(imu_pub)
+			imu_pub.publish(imu);
+		if(mag_pub)
+			mag_pub.publish(mag);
 	}
 
 	spatialError = 0;
