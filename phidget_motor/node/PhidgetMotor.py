@@ -264,7 +264,7 @@ def initMotorAndEncoderBoards():
     """ Open and Attach the phidget motor control board. Check if an 1064 or 1065 board is used and attach another 1065 board in case a 1065 is detected, or attach an encoder board in case a 1064 is detected
     """
 
-    global motorControl, motorControlRight, rightWheels, phidget1065, encoders 
+    global motorControl, motorControlRight, rightWheels, phidget1065, encoders, leftEncoderPosition, rightEncoderPosition
     
 
     try:
@@ -292,6 +292,7 @@ def initMotorAndEncoderBoards():
         if motorControl.getMotorCount() == 1:
             phidget1065 = True 
             rightWheels = 0
+            motorControlRight = MotorControl()
             motorControlRight.setOnAttachHandler(mcAttached)
             motorControlRight.setOnErrorhandler(mcError)
             motorControlRight.setOnVelocityChangeHandler(mcVelocityChanged)
@@ -308,11 +309,11 @@ def initMotorAndEncoderBoards():
             motorControlRight.setOnPositionUpdateHandler(rightEncoderUpdated)
 
             #attach the board
+            motorControlRight.openPhidget()
             motorControlRight.waitForAttach(10000)
 
         else: # we have a motor controller board that control 2 motors but doesn't get any encoder input, so we need to initialize the encoder board.
             encoders = Encoder()
-            encoders.setOnAttachHandler(encoderBoardAttached)
             encoders.setOnPositionChangeHandler(encoderBoardPositionChange)
             encoders.openPhidget()
             encoders.waitForAttach(10000)
