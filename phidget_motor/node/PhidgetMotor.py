@@ -21,6 +21,7 @@ from Phidgets.Events.Events import EncoderPositionUpdateEventArgs
 from Phidgets.Devices.Encoder import Encoder
 
 motors_inverted = False
+encoders_inverted = False
 
 phidget1065 = False # True if we have a phidget1065, false if 1064
 motorControl = 0
@@ -233,9 +234,9 @@ def encoderBoardPositionChange(e):
     global leftEncoderPosition, rightEncoderPosition, leftPosition, rightPosition
 
     if e.index == leftEncoderPosition:
-        leftPosition = leftPosition - e.e.positionChange
+        leftPosition = leftPosition - e.positionChange
     elif e.index == rightEncoderPosition:
-        rightPosition = rightPosition + e.e.positionChange
+        rightPosition = rightPosition + e.positionChange
 
     sendEncoderPosition()
     return
@@ -264,7 +265,7 @@ def initMotorAndEncoderBoards():
     """ Open and Attach the phidget motor control board. Check if an 1064 or 1065 board is used and attach another 1065 board in case a 1065 is detected, or attach an encoder board in case a 1064 is detected
     """
 
-    global motorControl, motorControlRight, rightWheels, phidget1065, encoders, leftEncoderPosition, rightEncoderPosition
+    global motorControl, motorControlRight, rightWheels, phidget1065, encoders, leftEncoderPosition, rightEncoderPosition, motors_inverted, encoders_inverted
     
 
     try:
@@ -358,14 +359,15 @@ def setupMoveService():
     global motorControl, encoders, minAcceleration, maxAcceleration, timer, motors_inverted, phidget1065, leftWheels, posdataPub, leftEnconderPub, rightEnconderPub
     timer = 0
     
+    motors_inverted = rospy.get_param('~motors_inverted', False)
+    encoders_inverted = rospy.get_param('~encoders_inverted', False)
+
     initMotorAndEncoderBoards() # initialize the phidgets boards
 
     if motorControl != 0 and motorControl.isAttached():
         minAcceleration = motorControl.getAccelerationMin(leftWheels)
         maxAcceleration = motorControl.getAccelerationMax(leftWheels)
 
-        motors_inverted = rospy.get_param('~motors_inverted', False)
-        leftEncoderPosition = rospy.get_param('~encoders_inverted', False)
 
         phidgetMotorTopic = rospy.Subscriber("PhidgetMotor", MotorCommand ,move)
         leftWheelTopic = rospy.Subscriber("lmotor_cmd", Float32 ,left_move) # topic used for differential_drive package to enable twist commands
