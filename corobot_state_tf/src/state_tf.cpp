@@ -62,7 +62,7 @@ void WheelCallback(const corobot_msgs::PosMsg::ConstPtr& pos)
             th = (th+ delta_th) -(mod*2*M_PI);
 	  }
 	  else
-	    firstTime = true;
+	    firstTime = false;
 
 	  //save the encoder position and time to use it when the next encoder measurement is received.
 	  _PreviousLeftEncoderCounts = pos->px;
