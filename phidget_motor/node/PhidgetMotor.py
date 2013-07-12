@@ -37,8 +37,8 @@ minSpeed = -100 # minimum speed that can be send to the phidget device
 maxSpeed = 100 # maximum speed that can be send to the phidget device
 timer = 0 # timer used to stop the motors after the number of seconds given in the message. This is interesting in case communication with a controlling computer is lost. 
 posdataPub = 0 # publish encoder data if we have phidget 1065 device
-leftEnconderPub = 0# publish left encoder data if we have phidget 1065 device
-rightEnconderPub = 0# publish right encoder data if we have phidget 1065 device
+leftEncoderPub = 0# publish left encoder data if we have phidget 1065 device
+rightEncoderPub = 0# publish right encoder data if we have phidget 1065 device
 leftPosition = 0 # value of the left encoder, if we have a 1065
 rightPosition = 0 # value of the right encoder, if we have a 1065
 
@@ -208,7 +208,7 @@ def mcVelocityChanged(e):
 
 def leftEncoderUpdated(e):
     # left encoder callback, used with phidget 1065 devices
-    global leftPosition, rightPosition, posdataPub, leftEnconderPub
+    global leftPosition, rightPosition, posdataPub, leftEncoderPub
 	
     leftPosition -= e.positionChange
     if motorControlRight:
@@ -220,7 +220,7 @@ def leftEncoderUpdated(e):
 
 def rightEncoderUpdated(e):
     # right encoder callback, used with phidget 1065 devices
-    global leftPosition, rightPosition, posdataPub, rightEnconderPub
+    global leftPosition, rightPosition, posdataPub, rightEncoderPub
 
     rightPosition += e.positionChange
     if motorControl:
@@ -252,8 +252,8 @@ def sendEncoderPosition():
     msg.header.stamp = rospy.Time.now()
     posdataPub.publish(msg)
 
-    #publish the same data as an Int, more more conveniency
-    msg = Int16Msg()
+    #publish the same data as an Int, for more conveniency
+    msg = Int16()
     msg.data = rightPosition
     rightEncoderPub.publish(msg)
     msg.data = leftPosition
@@ -356,7 +356,7 @@ def setupMoveService():
             log_level = rospy.DEBUG
             )
 
-    global motorControl, encoders, minAcceleration, maxAcceleration, timer, motors_inverted, phidget1065, leftWheels, posdataPub, leftEnconderPub, rightEnconderPub
+    global motorControl, encoders, minAcceleration, maxAcceleration, timer, motors_inverted, phidget1065, leftWheels, posdataPub, leftEncoderPub, rightEncoderPub
     timer = 0
     
     motors_inverted = rospy.get_param('~motors_inverted', False)
@@ -374,7 +374,7 @@ def setupMoveService():
         rightWheelTopic = rospy.Subscriber("rmotor_cmd", Float32 ,right_move)# topic used for differential_drive package to enable twist commands
 
         posdataPub = rospy.Publisher("position_data", PosMsg)
-        leftEnconderPub = rospy.Publisher("lwheel", Int16)
+        leftEncoderPub = rospy.Publisher("lwheel", Int16)
         rightEncoderPub = rospy.Publisher("rwheel", Int16)
 
         rospy.spin()
