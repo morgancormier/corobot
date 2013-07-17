@@ -19,6 +19,7 @@ from Phidgets.Devices.MotorControl import MotorControl
 from Phidgets.PhidgetException import PhidgetErrorCodes, PhidgetException
 from Phidgets.Events.Events import EncoderPositionUpdateEventArgs
 from Phidgets.Devices.Encoder import Encoder
+import numpy
 
 motors_inverted = False
 encoders_inverted = False
@@ -254,9 +255,9 @@ def sendEncoderPosition():
 
     #publish the same data as an Int, for more conveniency
     msg = Int16()
-    msg.data = rightPosition
+    msg.data = numby.int16(rightPosition)
     rightEncoderPub.publish(msg)
-    msg.data = leftPosition
+    msg.data = numby.int16(leftPosition)
     leftEncoderPub.publish(msg)
 
     return
