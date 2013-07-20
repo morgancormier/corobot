@@ -255,9 +255,9 @@ def sendEncoderPosition():
 
     #publish the same data as an Int, for more conveniency
     msg = Int16()
-    msg.data = numby.int16(rightPosition)
+    msg.data = numpy.int16(rightPosition)
     rightEncoderPub.publish(msg)
-    msg.data = numby.int16(leftPosition)
+    msg.data = numpy.int16(leftPosition)
     leftEncoderPub.publish(msg)
 
     return

@@ -55,6 +55,9 @@
   <run_depend>phidget_motor</run_depend>
   <run_depend>phidget_servo</run_depend>
   <run_depend>corobot_launch</run_depend>
+  <run_depend>corobot_gazebo</run_depend>
+  <run_depend>corobot_urdf</run_depend>
+
 
 
 
