@@ -35,35 +35,35 @@
 
 
 	<group if="$(arg twistCommand)">
-		<rosparam param="ticks_meter">7570</rosparam>
+		<rosparam param="ticks_meter">9405</rosparam>
 
 			<node pkg="differential_drive" type="pid_velocity.py" name="lpid_velocity">
 			    <remap from="wheel" to="lwheel"/>
 			    <remap from="motor_cmd" to="lmotor_cmd"/>
 			    <remap from="wheel_vtarget" to="lwheel_vtarget"/>
 			    <remap from="wheel_vel" to="lwheel_vel"/>
-			    <rosparam param="Kp">100</rosparam>
-			    <rosparam param="Ki">100</rosparam>
-			    <rosparam param="Kd">0</rosparam>
+			    <rosparam param="Kp">50</rosparam>
+			    <rosparam param="Ki">200</rosparam>
+			    <rosparam param="Kd">1</rosparam>
 			    <rosparam param="out_min">-100</rosparam>
 			    <rosparam param="out_max">100</rosparam>
 			    <rosparam param="rate">30</rosparam>
 			    <rosparam param="timeout_ticks">4</rosparam>
-			    <rosparam param="rolling_pts">5</rosparam>
+			    <rosparam param="rolling_pts">8</rosparam>
 			</node>
 			<node pkg="differential_drive" type="pid_velocity.py" name="rpid_velocity">
 			    <remap from="wheel" to="rwheel"/>
 			    <remap from="motor_cmd" to="rmotor_cmd"/>
 			    <remap from="wheel_vtarget" to="rwheel_vtarget"/>
 			    <remap from="wheel_vel" to="rwheel_vel"/>
-			    <rosparam param="Kp">100</rosparam>
-			    <rosparam param="Ki">100</rosparam>
-			    <rosparam param="Kd">0</rosparam>
+			    <rosparam param="Kp">50</rosparam>
+			    <rosparam param="Ki">200</rosparam>
+			    <rosparam param="Kd">1</rosparam>
 			    <rosparam param="out_min">-100</rosparam>
 			    <rosparam param="out_max">100</rosparam>
 			    <rosparam param="rate">30</rosparam>
 			    <rosparam param="timeout_ticks">4</rosparam>
-			    <rosparam param="rolling_pts">5</rosparam>
+			    <rosparam param="rolling_pts">8</rosparam>
 			</node>
 
 			<node pkg="differential_drive" type="twist_to_motors.py" name="twist_to_motors" output="screen">
