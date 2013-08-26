@@ -1,0 +1,7 @@
+<library path="lib/libcorobot_analyzer" >
+  <class name="diagnostic_aggregator/CorobotAnalyzer" type="diagnostic_aggregator::CorobotAnalyzer" base_class_type="diagnostic_aggregator::Analyzer">
+    <description>
+      CorobotAnalyzer is a diagnostics analyzer for the Corobot based on the generic analyzer. THe only difference is that is gets the message written in the field Recommendation and display it on the lcd. 
+    </description>
+  </class>
+</library>
