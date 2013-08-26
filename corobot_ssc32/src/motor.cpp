@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
+#include <corobot_diagnostics/diagnostics.h>
 
 using namespace Servo; 
 
@@ -98,13 +99,13 @@ void ssc32_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "initialized");
 	else if (ssc32Error == 1)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot be initialized");
-		stat.addf("Recommendation", "Please make sure the port path is the correct one.");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "ssc32 cannot be initialized");
+		stat.addf("Recommendation",SSC32_ERROR_CONNECTION);
 	}
 	else if (ssc32Error == 2)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot set speed");
-		stat.addf("Recommendation", "Please make sure the port path is the correct one. Also make sure the servo motors / motors are well connected to the ssc32 board");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot move arm");
+		stat.addf("Recommendation", ERROR_MOVING_ARM);
 	}
 }
 

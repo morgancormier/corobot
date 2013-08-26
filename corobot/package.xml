@@ -57,6 +57,7 @@
   <run_depend>corobot_launch</run_depend>
   <run_depend>corobot_gazebo</run_depend>
   <run_depend>corobot_urdf</run_depend>
+  <run_depend>corobot_diagnostics</run_depend>
 
 
 

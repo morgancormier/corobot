@@ -6,6 +6,7 @@
 #include "corobot_msgs/ServoType.h"
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
+#include <corobot_diagnostics/diagnostics.h>
 
 
 //Declare a servo handle
@@ -41,7 +42,7 @@ void setPositionCallback(const corobot_msgs::ServoPosition &msg)
 	if (err != 0)
 	{
 		ROS_ERROR("Could not set the servo motor number %d to the position %f",msg.index, msg.position);
-		servoError = 3;
+		servoError = 2;
 	}
 }
 
@@ -75,19 +76,13 @@ void servo_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "intialized");
 	else if(servoError == 1)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot be initialized");
-		stat.addf("Recommendation", "Please verify that the robot has a Phidget Servo Controller board. If present, please unplug and replug the Phidget Board USB cable from the Motherboard. Also, Please make sure that the phidget library is correctly installed.");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Phidget servo controller cannot be initialized");
+		stat.addf("Recommendation", PHIDGET_SERVO_ERROR_CONNECTION);
 	}
-
 	else if(servoError == 2)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot be attached");
-		stat.addf("Recommendation", "Please verify that the robot has a Phidget Servo Controller board. If present, please unplug and replug the Phidget Board USB cable from the Motherboard.");
-	}
-	else if(servoError == 3)
-	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot set position");
-		stat.addf("Recommendation", "Please verify that the servos are well connected to the Phidget Servo Controller Board.");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "The arm cannot be moved");
+		stat.addf("Recommendation", ERROR_MOVING_ARM);
 	}
 
 }
@@ -105,7 +100,7 @@ int main(int argc, char* argv[])
 	//create an updater that will send information on the diagnostics topics
 	diagnostic_updater::Updater updater;
 	updater.setHardwareIDf("Phidget");
-	updater.add("Servo Controller", servo_diagnostic); //function that will be executed with updater.update()
+	updater.add("Servo", servo_diagnostic); //function that will be executed with updater.update()
 
 
 	//create the servo object
@@ -136,7 +131,7 @@ int main(int argc, char* argv[])
 	if((err = CPhidget_waitForAttachment((CPhidgetHandle)servo, 10000)))
 	{
 		ROS_ERROR("Problem waiting for attachment of Phidget servo controller");
-		servoError = 2;
+		servoError = 1;
 	}
 
 	//Engage every servo to make sure they are powered on, setup the acceleration value and setup the default position value. 

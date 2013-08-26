@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(corobot_pantilt)
 
-find_package(catkin REQUIRED COMPONENTS corobot_msgs sensor_msgs std_msgs rosconsole joy diagnostic_updater)
+find_package(catkin REQUIRED COMPONENTS corobot_msgs sensor_msgs std_msgs rosconsole joy diagnostic_updater corobot_diagnostics)
 
 catkin_package(
    LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS roscpp sensor_msgs corobot_msgs rosconsole std_msgs joy)
+   CATKIN_DEPENDS roscpp sensor_msgs corobot_msgs rosconsole std_msgs joy corobot_diagnostics)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 

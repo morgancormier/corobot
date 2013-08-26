@@ -16,6 +16,7 @@
 #include <tf/transform_datatypes.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
+#include <corobot_diagnostics/diagnostics.h>
 
 
 CPhidgetInterfaceKitHandle ifKit = 0;
@@ -327,8 +328,8 @@ void phidget_ik_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "initialized");
 	else
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot be attached");
-		stat.addf("Recommendation", "Please unplug and replug the Phidget Interface Kit Board USB cable from the Motherboard.");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Phidget 8/8/8 cannot be initialized");
+		stat.addf("Recommendation", PhidgetIK_INIT_ERROR);
 	}
 }
 
@@ -341,8 +342,8 @@ void phidget_spatial_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &sta
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "initialized");
 	else
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "cannot be attached");
-		stat.addf("Recommendation", "Please verify that the robot has a Phidget Spatial board. If present, please unplug and replug the Phidget Spatial Board USB cable from the Motherboard.");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "IMU cannot be initialized");
+		stat.addf("Recommendation", PhidgetIMU_INIT_ERROR);
 	}
 }
 

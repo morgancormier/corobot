@@ -24,6 +24,7 @@ Package is GPL since some of its code is adapted from GPL programs such as guvcv
   <build_depend>corobot_msgs</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>libswscale-dev</build_depend>
+  <build_depend>corobot_diagnostics</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
@@ -33,6 +34,7 @@ Package is GPL since some of its code is adapted from GPL programs such as guvcv
   <run_depend>corobot_msgs</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>libswscale-dev</run_depend>
+  <run_depend>corobot_diagnostics</run_depend>
 
 
   <export>

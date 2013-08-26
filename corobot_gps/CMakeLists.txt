@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(corobot_gps)
 
-find_package(catkin REQUIRED COMPONENTS corobot_msgs diagnostic_updater)
+find_package(catkin REQUIRED COMPONENTS corobot_msgs diagnostic_updater corobot_diagnostics)
 
 
 catkin_package(
    LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS roscpp diagnostic_updater)
+   CATKIN_DEPENDS roscpp diagnostic_updater corobot_diagnostics)
 
 include_directories(${catkin_INCLUDE_DIRS})
 

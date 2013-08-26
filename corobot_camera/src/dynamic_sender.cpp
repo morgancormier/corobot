@@ -44,6 +44,7 @@
 #include <corobot_camera/corobot_cameraConfig.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
+#include "corobot_diagnostics/diagnostics.h"
 
 #include <image_transport/image_transport.h>
 #include <opencv/cvwimage.h>
@@ -243,23 +244,21 @@ void webcam_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "The camera is working");
 	else if (camera_state == 1)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "The user has stopped the camera");
-		stat.addf("Recommendation", "Please restart the node. If the problem persists, make sure the immediately parameter is set to true.");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::WARN, "The user has stopped the camera. Activate it again to see the camera view");
 	}
 	else if (camera_state == 2)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::WARN, "No subscriber to the camera topic");
-		stat.addf("Recommendation", "Please start a node that uses the camera. If using corobot_teleop, make sure the connect button has been clicked and that you are on a tab that permits you to visualize the camera.");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::WARN, "No subscriber to the camera topic - Start corobot_teleop or another image viewer");
 	}
 	else if (camera_state == 3)
 	{
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Could not grab the image");
-		stat.addf("Recommendation", "Please make sure the camera is not disconnected. Also make sure that you have the necessary permissions to access the camera");
+		stat.addf("Recommendation", CAMERA_DISCONNECTED);
 	}
 	else if (camera_state == 4)
 	{
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Could not initialize the camera");
-		stat.addf("Recommendation", "Please make sure the camera is not disconnected. Also make sure that you have the necessary permissions to access the camera");
+		stat.addf("Recommendation", ERROR_CAMERA_PARAMETERS);
 	}
 
 }

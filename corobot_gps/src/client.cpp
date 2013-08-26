@@ -6,6 +6,7 @@
 #include <libgpsmm.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
+#include <corobot_diagnostics/diagnostics.h>
 
 using namespace corobot_msgs;
 using namespace sensor_msgs;
@@ -111,13 +112,13 @@ class GPSDClient {
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "The gps is working");
 	else if (gps_state == 1)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Can't intialize");
-		stat.addf("Recommendation", "The gps could not be initialized. Please make sure the gps is connected to the motherboard and is configured. You can follow points 1.3 and after in the following tutorial for the configuration: http://ros.org/wiki/gpsd_client/Tutorials/Getting started with gpsd_client");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "GPS Can't be intialized");
+		stat.addf("Recommendation", GPS_INIT_ERROR);
 	}
 	else if (gps_state == 2)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "wrong lib gpsd version");
-		stat.addf("Recommendation", "Please make sure that gpsd is installed and that you have at least the api major version 3 or after installed.");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Wrong gpsd library version");
+		stat.addf("Recommendation", GPS_WRONG_LIB);
 	}
     }
 

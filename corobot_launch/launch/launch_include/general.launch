@@ -85,7 +85,7 @@
   <node pkg="diagnostic_aggregator" type="aggregator_node"
         name="diagnostic_aggregator" output="screen">
     <rosparam command="load" 
-              file="$(find corobot_teleop)/config/corobot_analyzer.yaml" />
+              file="$(find corobot_diagnostics)/config/corobot_analyzer.yaml" />
   </node>
 
 </launch>

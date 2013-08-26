@@ -2,17 +2,17 @@ cmake_minimum_required(VERSION 2.8.3)
 project(corobot_camera)
 
 find_package(OpenCV REQUIRED)
-find_package(catkin REQUIRED COMPONENTS dynamic_reconfigure roscpp sensor_msgs image_transport camera_calibration_parsers)
+find_package(catkin REQUIRED COMPONENTS dynamic_reconfigure roscpp sensor_msgs image_transport camera_calibration_parsers corobot_diagnostics)
 
 generate_dynamic_reconfigure_options(cfg/parameters.cfg)
 
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS roscpp dynamic_reconfigure
+   CATKIN_DEPENDS dynamic_reconfigure roscpp sensor_msgs image_transport camera_calibration_parsers corobot_diagnostics
    DEPENDS OpenCV SDL)
 
-include_directories(include ${catkin_INCLUDE_DIRS} cfg/cpp) 
+include_directories(include ${catkin_INCLUDE_DIRS} cfg/cpp ${corobot_diagnostics_INCLUDE_DIRS}) 
 
 include_directories(${SDL_INCLUDE_DIRS})
 include_directories(include)

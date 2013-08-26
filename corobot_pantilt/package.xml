@@ -22,6 +22,8 @@
   <build_depend>joy</build_depend>
   <build_depend>rosconsole</build_depend>
   <build_depend>diagnostic_updater</build_depend>
+  <build_depend>corobot_diagnostics</build_depend>
+
 
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
@@ -30,6 +32,7 @@
   <run_depend>joy</run_depend>
   <run_depend>rosconsole</run_depend>
   <run_depend>diagnostic_updater</run_depend>
+  <run_depend>corobot_diagnostics</run_depend>
 
 </package>
 

@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(phidget_servo)
 
-find_package(catkin REQUIRED COMPONENTS corobot_msgs roscpp)
+find_package(catkin REQUIRED COMPONENTS corobot_msgs roscpp corobot_diagnostics)
 
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS roscpp)
+   CATKIN_DEPENDS roscpp corobot_diagnostics)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 

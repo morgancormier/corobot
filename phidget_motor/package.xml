@@ -25,11 +25,14 @@
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>corobot_msgs</build_depend>
+  <build_depend>corobot_diagnostics</build_depend>
+
 
 
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>corobot_msgs</run_depend>
+  <run_depend>corobot_diagnostics</run_depend>
 
 
 </package>

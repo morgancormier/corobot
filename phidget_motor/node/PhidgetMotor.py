@@ -20,6 +20,7 @@ from Phidgets.PhidgetException import PhidgetErrorCodes, PhidgetException
 from Phidgets.Events.Events import EncoderPositionUpdateEventArgs
 from Phidgets.Devices.Encoder import Encoder
 import numpy
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 motors_inverted = False
 encoders_inverted = False
@@ -42,7 +43,15 @@ leftEncoderPub = 0# publish left encoder data if we have phidget 1065 device
 rightEncoderPub = 0# publish right encoder data if we have phidget 1065 device
 leftPosition = 0 # value of the left encoder, if we have a 1065
 rightPosition = 0 # value of the right encoder, if we have a 1065
+diagnosticPub = 0 #publish diagnostic messages
+motorsError = 0 # help to find out which message we send on the diagnostics topic
+encodersError = 0 # help to find out which message we send on the diagnostics topic
 
+# diagnostics messages
+motorControllerDisconnected = "Phidgets Motor controller disconnected - Please make sure it is connected, try to disconnect and reconnect it, or restart"
+motorSpeedError = "Cannot Set Motor Speed - Make sure the Phidget Motor controller board has not been disconnected and the speed is within the range"
+encoderBoardDisconnected = "Phidgets Encoder board disconnected - Please make sure it is connected, try to disconnect and reconnect it, or restart"
+encoderValueError = "Cannot get encoder value - Please make sure the encoder board and encoders are connected"
 
 def stop():
     # stop the motors
@@ -55,7 +64,9 @@ def stop():
         	motorControl.setVelocity(rightWheels, 0);
     except PhidgetException as e:
         rospy.logerr("Failed in setVelocity() %i: %s", e.code, e.details)
+        motorsError = 2
         return(False)
+    motorsError = 0
     return(True)
 
 
@@ -125,6 +136,7 @@ def move(request):
             motorControl.setAcceleration(rightWheels, acceleration);
     except PhidgetException as e:
         rospy.logerr("Failed in setAcceleration() %i: %s", e.code, e.details)
+        motorsError = 2
         return(False)
 
     # set the velocity
@@ -137,12 +149,14 @@ def move(request):
             motorControl.setVelocity(rightWheels, rightSpeed);
     except PhidgetException as e:
         rospy.logerr("Failed in setVelocity() %i: %s", e.code, e.details)
+        motorsError = 2
         return(False)
 
     # start the timer to stop the motors after the requested duration
     if request.secondsDuration != 0:
         timer = Timer(request.secondsDuration, stop)
         timer.start()
+    motorsError = 0
     return(True)
 
 
@@ -164,8 +178,10 @@ def left_move(request):
 
     except PhidgetException as e:
         rospy.logerr("Failed in setVelocity() %i: %s", e.code, e.details)
+        motorsError = 2
         return(False)
 
+    motorsError = 0
     return(True)
 
 
@@ -191,8 +207,10 @@ def right_move(request):
 
     except PhidgetException as e:
         rospy.logerr("Failed in setVelocity() %i: %s", e.code, e.details)
+        motorsError = 2
         return(False)
 
+    motorsError = 0
     return(True)
 
 
@@ -212,9 +230,12 @@ def leftEncoderUpdated(e):
     global leftPosition, rightPosition, posdataPub, leftEncoderPub
 	
     leftPosition -= e.positionChange
-    if motorControlRight:
-        rightPosition = motorControlRight.getEncoderPosition(rightWheels) # update the right encoder so that we have a correct value of both encoders at a given time.
-
+    try:
+        if motorControlRight:
+            rightPosition = motorControlRight.getEncoderPosition(rightWheels) # update the right encoder so that we have a correct value of both encoders at a given time.
+    except:
+        encodersError = 2
+        
     sendEncoderPosition()
 
     return
@@ -224,9 +245,12 @@ def rightEncoderUpdated(e):
     global leftPosition, rightPosition, posdataPub, rightEncoderPub
 
     rightPosition += e.positionChange
-    if motorControl:
-        leftPosition = motorControl.getEncoderPosition(leftWheels) # update the left encoder so that we have a correct value of both encoders at a given time.
-
+    try:
+        if motorControl:
+            leftPosition = motorControl.getEncoderPosition(leftWheels) # update the left encoder so that we have a correct value of both encoders at a given time.
+    except:
+        encodersError = 2
+        
     sendEncoderPosition()
     return
 
@@ -327,9 +351,13 @@ def initMotorAndEncoderBoards():
            
 
     except PhidgetException as e:
+        motorsError = 1
+        encodersError = 1
         rospy.logerr("Unable to initialize the motors and encoders board: %i: %s", e.code, e.details)
         return
     except:
+        motorsError = 1
+        encodersError = 1
         rospy.logerr("Unable to register the motors and encoders board")
         return
 
@@ -342,6 +370,37 @@ def initMotorAndEncoderBoards():
         rospy.loginfo("Device: %s, Serial: %d, Version: %d",encoders.getDeviceName(),encoders.getSerialNum(),encoders.getDeviceVersion())
 
     return
+
+def diagnosticsCallback (event):
+    #Called every second and send diagnostic messages to tell the user if everything is ok or if something is wrong
+
+    array = DiagnosticArray()
+    
+    motors_message = DiagnosticStatus(name = 'PhidgetMotors', level = 0,message = 'initialized', hardware_id='Phidget')
+    
+    if (motorsError == 1):
+        motors_message.level = 2
+        motors_message.message = "Phidget Motor controller can't be initialized"
+        motors_message.values = [ KeyValue(key = 'Recommendation', value = motorControllerDisconnected)]
+    if (motorsError == 2):
+        motors_message.level = 2
+        motors_message.message = "Can't set up motor speed"
+        motors_message.values = [ KeyValue(key = 'Recommendation', value = motorSpeedError)]
+        
+    encoders_message = DiagnosticStatus(name = 'PhidgetEncoders', level = 0,message = 'initialized', hardware_id='Phidget')
+    
+    if (encodersError == 1):
+        encoders_message.level = 2
+        encoders_message.message = "Phidget Encoder board can't be initialized"
+        encoders_message.values = [ KeyValue(key = 'Recommendation', value = encoderBoardDisconnected)]
+    if (encodersError == 2):
+        encoders_message.level = 2
+        encoders_message.message = "Can't get encoder value"
+        encoders_message.values = [ KeyValue(key = 'Recommendation', value = encoderValueError)]
+    
+    array.status = [ motors_message, encoders_message ]
+  
+    diagnosticPub.publish(array)
 
 
 def setupMoveService():
@@ -377,6 +436,9 @@ def setupMoveService():
         posdataPub = rospy.Publisher("position_data", PosMsg)
         leftEncoderPub = rospy.Publisher("lwheel", Int16)
         rightEncoderPub = rospy.Publisher("rwheel", Int16)
+        diagnosticPub = rospy.Publisher('/diagnostics', DiagnosticArray)
+        
+        rospy.Timer(1.0, diagnosticsCallback, oneshot=False)
 
         rospy.spin()
 

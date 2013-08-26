@@ -49,6 +49,7 @@
 #include <errno.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
+#include <corobot_diagnostics/diagnostics.h>
 
 extern "C" {
   #include "dynctrl.h"
@@ -91,13 +92,13 @@ void pantilt_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "initialized");
 	else if (pantiltError == 1)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Cannot be initialized");
-		stat.addf("Recommendation", "Please make sure the port path is the correct one. Make sure the permissions are correct and that the camera has pan tilt option");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Camera pan tilt cannot be initialized");
+		stat.addf("Recommendation", CAMERA_DISCONNECTED);
 	}
 	else if (pantiltError == 2)
 	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Cannot move camera");
-		stat.addf("Recommendation", "Please make sure the port path is the correct one. Make sure the permissions are correct and that the camera has pan tilt option");
+		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Camera cannot be moved");
+		stat.addf("Recommendation", ERROR_MOVING_CAMERA);
 	}
 }
 
