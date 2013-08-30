@@ -369,7 +369,7 @@ int main(int argc, char* argv[])
 	updater.add("Spatial", phidget_spatial_diagnostic); //function that will be executed with updater.update()	
 
 	interfacekit_simple();
-
+    ros::Rate rate(70);
 	while (ros::ok())
     	{
         	ros::spinOnce(); // ROS loop
@@ -377,6 +377,7 @@ int main(int argc, char* argv[])
 		if(sonarsPresent) // acquire new sonar data if sonar sensors are present
 			sendSonarResult();
 		updater.update(); //update diagnostics
+		rate.sleep();
     	}
 
 	

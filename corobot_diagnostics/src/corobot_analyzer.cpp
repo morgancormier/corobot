@@ -124,7 +124,13 @@ bool CorobotAnalyzer::init(const string base_path, const ros::NodeHandle &n)
   n.param("timeout", timeout, 5.0);   // Timeout for stale
   n.param("num_items", num_items_expected, -1); // Number of items must match this
   n.param("discard_stale", discard_stale, false);
-
+  
+  ros::NodeHandle nh;
+  
+  newError_pub = nh.advertise<std_msgs::String>("new_diagnostic_error", 100);
+  removeError_pub = nh.advertise<std_msgs::String>("remove_diagnostic_error", 100);
+  isError = false;
+  
   string my_path;
   if (base_path == "/")
     my_path = nice_name;
@@ -134,7 +140,6 @@ bool CorobotAnalyzer::init(const string base_path, const ros::NodeHandle &n)
   if (my_path.find("/") != 0)
     my_path = "/" + my_path;
 
-  lcd.open();
 
   return GenericAnalyzerBase::init(my_path, nice_name, 
                                    timeout, num_items_expected, discard_stale);
@@ -142,7 +147,7 @@ bool CorobotAnalyzer::init(const string base_path, const ros::NodeHandle &n)
 
 CorobotAnalyzer::~CorobotAnalyzer() 
 { 
-  lcd.close();
+
 }
 
 
@@ -239,21 +244,25 @@ vector<boost::shared_ptr<diagnostic_msgs::DiagnosticStatus> > CorobotAnalyzer::r
     {
       if(processed[j]->values[k].key == "Recommendation")
 	  {
-	    bool equal = false;
-	    for (unsigned int l = 0; l < lcd_past_messages.size(); l++)
-	    {
-	        if (lcd_past_messages.at(l).compare(processed[j]->values[k].value) == 0)
-	        {
-		        equal = true;
-		    }
-		}
-		if(equal == false)
-		{
-		    lcd.write(processed[j]->values[k].value);
-		    lcd_past_messages.push_back(processed[j]->values[k].value);
-		}
+	    error = processed[j]->values[k].value;
+	    isError = true;
+	    std_msgs::String msg;
+	    msg.data = error;
+	    if(newError_pub)
+	        newError_pub.publish(msg);
+	    
 	  }
     }
+    if (processed[j]-> level <= 1 && isError == true)
+    {
+	    std_msgs::String msg;
+	    msg.data = error;
+	    if(removeError_pub)
+	        removeError_pub.publish(msg);
+	    isError = false;
+	}
+	    
+        
   }
 
   for (unsigned int j = 0; j < processed.size(); ++j)

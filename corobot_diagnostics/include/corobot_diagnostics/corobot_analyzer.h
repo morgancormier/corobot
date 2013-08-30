@@ -49,8 +49,9 @@
 #include "diagnostic_aggregator/status_item.h"
 #include "diagnostic_aggregator/generic_analyzer_base.h"
 #include "XmlRpcValue.h"
-#include "corobot_diagnostics/lcd.hpp"
+#include "std_msgs/String.h"
 
+#undef DEBUG
 
 namespace diagnostic_aggregator
 {
@@ -233,9 +234,10 @@ private:
   std::vector<std::string> contains_;
   std::vector<std::string> name_;
   std::vector<boost::regex> regex_; /**< Regular expressions to check against diagnostics names. */
-  std::vector<std::string> lcd_past_messages; // Save the past messages to make sure we don't display the same messages every second
-
-  Lcd lcd;
+  std::string error; //save the latest error
+  bool isError;
+  
+  ros::Publisher removeError_pub, newError_pub;
 
 };
 

@@ -66,8 +66,8 @@
 			    <rosparam param="rolling_pts">8</rosparam>
 			</node>
 
-			<node pkg="differential_drive" type="twist_to_motors.py" name="twist_to_motors" output="screen">
-			  <rosparam param="base_width">0.35</rosparam>
+			<node pkg="differential_drive" type="twist_to_motors.py" name="twist_to_motors">
+			  <rosparam param="base_width">0.25</rosparam>
 			</node>
   </group>
 

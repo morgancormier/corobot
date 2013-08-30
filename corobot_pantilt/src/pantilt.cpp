@@ -137,11 +137,12 @@ int main(int argc, char** argv)
 
 //adversize the topics
   ros::Subscriber pantilt_sub = n.subscribe("/pantilt", 1, pantiltCallback);
-
+  ros::Rate rate(40);
   while (ros::ok())
   {
 	ros::spinOnce();
 	updater.update();
+	rate.sleep();
   }
 
   close(cam_fd);
