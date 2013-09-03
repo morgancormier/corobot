@@ -185,6 +185,18 @@ def left_move(request):
     return(True)
 
 
+def twist_command(request):
+    """move the motors with a twist messages """
+    
+    Float32 speed;
+    speed.data = request.linear.x * 66 - request.angular.z * 0.35 * 66; 
+    left_move(speed);
+    speed.data = request.linear.x * 66 + request.angular.z * 0.35 * 66; 
+    right_move(speed);
+
+    
+    
+
 def right_move(request):
     """move the right wheel as requested. This function doesn't use timer, and doesn't setup acceleration. 
        However it is used by the differential drive package to be able to command the robot with twist messages.
@@ -432,6 +444,7 @@ def setupMoveService():
         phidgetMotorTopic = rospy.Subscriber("PhidgetMotor", MotorCommand ,move)
         leftWheelTopic = rospy.Subscriber("lmotor_cmd", Float32 ,left_move) # topic used for differential_drive package to enable twist commands
         rightWheelTopic = rospy.Subscriber("rmotor_cmd", Float32 ,right_move)# topic used for differential_drive package to enable twist commands
+        twistTopic = rospy.Subscriber("twist", Twist, twist_command)
 
         posdataPub = rospy.Publisher("position_data", PosMsg)
         leftEncoderPub = rospy.Publisher("lwheel", Int16)
