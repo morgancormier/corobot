@@ -14,6 +14,7 @@ from corobot_msgs.msg import *
 from std_msgs.msg import *
 import rospy
 from  threading import Timer
+from geometry_msgs.msg import Twist
 from ctypes import *
 from Phidgets.Devices.MotorControl import MotorControl
 from Phidgets.PhidgetException import PhidgetErrorCodes, PhidgetException
@@ -188,11 +189,11 @@ def left_move(request):
 def twist_command(request):
     """move the motors with a twist messages """
     
-    Float32 speed;
-    speed.data = request.linear.x * 66 - request.angular.z * 0.35 * 66; 
-    left_move(speed);
-    speed.data = request.linear.x * 66 + request.angular.z * 0.35 * 66; 
-    right_move(speed);
+    speed = Float32()
+    speed.data = request.linear.x * 66 - request.angular.z * 0.35 * 66
+    left_move(speed)
+    speed.data = request.linear.x * 66 + request.angular.z * 0.35 * 66 
+    right_move(speed)
 
     
     
@@ -241,7 +242,7 @@ def leftEncoderUpdated(e):
     # left encoder callback, used with phidget 1065 devices
     global leftPosition, rightPosition, posdataPub, leftEncoderPub
 	
-    leftPosition -= e.positionChange
+    leftPosition += e.positionChange
     try:
         if motorControlRight:
             rightPosition = motorControlRight.getEncoderPosition(rightWheels) # update the right encoder so that we have a correct value of both encoders at a given time.
@@ -256,7 +257,7 @@ def rightEncoderUpdated(e):
     # right encoder callback, used with phidget 1065 devices
     global leftPosition, rightPosition, posdataPub, rightEncoderPub
 
-    rightPosition += e.positionChange
+    rightPosition -= e.positionChange
     try:
         if motorControl:
             leftPosition = motorControl.getEncoderPosition(leftWheels) # update the left encoder so that we have a correct value of both encoders at a given time.
@@ -271,9 +272,9 @@ def encoderBoardPositionChange(e):
     global leftEncoderPosition, rightEncoderPosition, leftPosition, rightPosition
 
     if e.index == leftEncoderPosition:
-        leftPosition = leftPosition - e.positionChange
+        leftPosition = leftPosition + e.positionChange
     elif e.index == rightEncoderPosition:
-        rightPosition = rightPosition + e.positionChange
+        rightPosition = rightPosition - e.positionChange
 
     sendEncoderPosition()
     return
