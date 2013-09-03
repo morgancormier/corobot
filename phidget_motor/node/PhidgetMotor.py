@@ -445,7 +445,7 @@ def setupMoveService():
         phidgetMotorTopic = rospy.Subscriber("PhidgetMotor", MotorCommand ,move)
         leftWheelTopic = rospy.Subscriber("lmotor_cmd", Float32 ,left_move) # topic used for differential_drive package to enable twist commands
         rightWheelTopic = rospy.Subscriber("rmotor_cmd", Float32 ,right_move)# topic used for differential_drive package to enable twist commands
-        twistTopic = rospy.Subscriber("twist", Twist, twist_command)
+        #twistTopic = rospy.Subscriber("twist", Twist, twist_command)
 
         posdataPub = rospy.Publisher("position_data", PosMsg)
         leftEncoderPub = rospy.Publisher("lwheel", Int16)
