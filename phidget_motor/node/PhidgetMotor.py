@@ -175,7 +175,7 @@ def left_move(request):
 
     # set the velocity
     try:
-        motorControlRight.setAcceleration(leftWheels, 40);
+        motorControl.setAcceleration(leftWheels, 40);
         motorControl.setVelocity(leftWheels, leftSpeed);
 
     except PhidgetException as e:
@@ -218,6 +218,7 @@ def right_move(request):
             motorControlRight.setAcceleration(rightWheels, 40);
             motorControlRight.setVelocity(rightWheels, rightSpeed);
         else:
+            motorControl.setAcceleration(rightWheels, 40);
             motorControl.setVelocity(rightWheels, rightSpeed);
 
     except PhidgetException as e:
