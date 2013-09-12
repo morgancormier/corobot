@@ -46,7 +46,7 @@
   <run_depend>corobot_camera</run_depend>
   <run_depend>corobot_gps</run_depend>
   <run_depend>corobot_joystick</run_depend>
-  <run_depend>corobot_map_to_jpeg</run_depend>
+  <run_depend>map_to_jpeg</run_depend>
   <run_depend>corobot_pantilt</run_depend>
   <run_depend>corobot_phidget_ik</run_depend>
   <run_depend>corobot_ssc32</run_depend>
