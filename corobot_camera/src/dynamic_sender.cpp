@@ -168,7 +168,7 @@ void mainloop(const char* device, int width, int height, int fps, ros::NodeHandl
 				if (count++ % fps == 0) {
 					ros::Time t(ros::Time::now());
 					ros::Duration d(t - t_prev);
-					ROS_DEBUG("%.1f fps skip %lu", (double) fps / d.toSec(), skip_count);
+					ROS_DEBUG("%.1f fps skip %llu", (double) fps / d.toSec(), skip_count);
 					t_prev = t;
 				}
 	
@@ -218,7 +218,6 @@ void mainloop(const char* device, int width, int height, int fps, ros::NodeHandl
 				cam_ptr = NULL;
 				camera_activated = false;
 			}
-			ROS_INFO("out of while loop");
 			r.sleep();
 		}
 		// for the callbacks

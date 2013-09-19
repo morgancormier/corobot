@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package>
+  <name>phidget_stepper</name>
+  <version>1.0.0</version>
+  <description>
+
+	Node interfacing the Phidget Stepper Controller. 
+	This package depends on the Phidget client library being installed manually:
+		http://www.phidgets.com/drivers.php
+  </description>
+
+  <maintainer email="mcormier@coroware.com">Morgan Cormier</maintainer>
+  <license>BSD</license>
+  <url type="website">http://ros.org/wiki/phidget_servo</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>diagnostic_updater</build_depend>
+  <build_depend>corobot_msgs</build_depend>
+  <build_depend>corobot_diagnostics</build_depend>
+
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>diagnostic_updater</run_depend>
+  <run_depend>corobot_msgs</run_depend>
+  <run_depend>corobot_diagnostics</run_depend>
+</package>
+
+

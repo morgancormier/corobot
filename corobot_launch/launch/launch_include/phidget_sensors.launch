@@ -16,7 +16,7 @@
 
 <!--***** IMU *****-->
 
-<arg name="imu" value="1"/> <!-- 1 if you have a Phidget Spatial IMU, 0 if you don't -->
+<arg name="imu" value="0"/> <!-- 1 if you have a Phidget Spatial IMU, 0 if you don't -->
 
 
 

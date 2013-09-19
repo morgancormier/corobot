@@ -1,0 +1,16 @@
+# In this list you have to manually specify the serial number of the Phidget Steper boards you have.
+# Note that each stepper board command only one stepper motor.
+# Specify -1 as the serial number if you do not have or do not want to use the Phidget Stepper Board corresponding to the name
+
+# For example if you have stepper motors on the left and right wheels but do not have an arm, 
+# specify the serial number of the board corresponding to the left and right wheel but leave the other values to -1.
+
+servo_list: {
+    leftWheel: {serial: -1}, #id: 0
+    rightWheel: {serial: -1}, #id: 1
+    armBaseRotation: {serial: -1}, #id: 2
+    armShoulder: {serial: -1}, #id: 3
+    armElbow: {serial: -1}, #id: 4
+    armWrist: {serial: -1}, #id: 5
+    armGripper: {serial: -1} #id: 6
+}

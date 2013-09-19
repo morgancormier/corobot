@@ -1,0 +1,190 @@
+#include "ros/ros.h"
+#include <stdio.h>
+#include <math.h>
+
+#include "std_msgs/Float64.h"
+#include "corobot_msgs/MoveArm.h"
+#include <phidget21.h>
+
+//Enumeration to identify the position of a stepper
+typedef enum
+{
+	leftWheel,
+	rightWheel,
+	armBaseRotation,
+    armShoulder,
+	armElbow,
+	armWrist,
+	armGripper
+} stepper_type;
+
+
+// stepper type that save data about the connected stepper.
+typedef struct
+{
+	stepper_type type;
+	int serial; 
+	CPhidgetStepperHandle handle;
+} stepper;
+
+stepper* steppers = NULL; // list of connected servos
+int number_stepper = 0; // THe number of connected stepper motors
+int stepperError = 0; // used for diagnostics purpose
+
+
+void setStepperPosition(const corobot_msgs::MoveArm &msg)
+/**
+ * @brief Topic to move the stepper motors of the Corobot
+ */ 
+{
+	int err;
+	for(int i; i<number_stepper; i++)
+	{
+
+		//We received the indication on which stepper we want to move, so now we are finding the index corresponding to the servo.  
+		if(msg.index == steppers[i].type)
+		{
+		    err = CPhidgetStepper_setTargetPosition(steppers[i].handle, 0, msg.position);	
+		    if (err != 0)
+		    {
+		        stepperError = 2;
+		    }
+		    else
+		    {
+		        stepperError = 0;
+		    }
+		}
+	}
+}
+
+
+void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
+/**
+ * @brief initialise the list of servos (variable servos) and the number of servos connected. It reads this from the yaml file. 
+ */ 
+{
+	if(stepper_list.hasMember("leftWheel") && (int)stepper_list["leftWheel"]["serial"] != -1)
+	{
+		steppers[number_stepper].type = leftWheel;
+		steppers[number_stepper].serial = (int) stepper_list["leftWheel"]["serial"];
+        steppers[number_stepper].handle = 0;
+        
+		number_stepper++;
+	}
+	if(stepper_list.hasMember("rightWheel") && (int)stepper_list["leftWheel"]["serial"] != -1)
+	{
+		steppers[number_stepper].type = rightWheel;
+		steppers[number_stepper].serial = (int) stepper_list["rightWheel"]["serial"];
+        steppers[number_stepper].handle = 0;
+        
+		number_stepper++;
+	}
+	if(stepper_list.hasMember("armBaseRotation") && (int)stepper_list["leftWheel"]["serial"] != -1)
+	{
+		steppers[number_stepper].type = armBaseRotation;
+		steppers[number_stepper].serial = (int) stepper_list["armBaseRotation"]["serial"];
+        steppers[number_stepper].handle = 0;
+        
+		number_stepper++;
+	}
+	if(stepper_list.hasMember("armShoulder") && (int)stepper_list["leftWheel"]["serial"] != -1)
+	{
+		steppers[number_stepper].type = armShoulder;
+		steppers[number_stepper].serial = (int) stepper_list["armShoulder"]["serial"];
+        steppers[number_stepper].handle = 0;
+        
+		number_stepper++;
+	}
+	if(stepper_list.hasMember("armElbow") && (int)stepper_list["leftWheel"]["serial"] != -1)
+	{
+		steppers[number_stepper].type = armElbow;
+		steppers[number_stepper].serial = (int) stepper_list["armElbow"]["serial"];
+        steppers[number_stepper].handle = 0;
+        
+		number_stepper++;
+	}
+	if(stepper_list.hasMember("armWrist") && (int)stepper_list["leftWheel"]["serial"] != -1)
+	{
+		steppers[number_stepper].type = armWrist;
+		steppers[number_stepper].serial = (int) stepper_list["armWrist"]["serial"];
+        steppers[number_stepper].handle = 0;
+        
+		number_stepper++;
+	}
+	if(stepper_list.hasMember("armGripper") && (int)stepper_list["leftWheel"]["serial"] != -1)
+	{
+		steppers[number_stepper].type = armGripper;
+		steppers[number_stepper].serial = (int) stepper_list["armGripper"]["serial"];
+        steppers[number_stepper].handle = 0;
+        
+		number_stepper++;
+	}
+}
+
+
+void init_stepper_boards()
+{
+    int err;
+    for(int i; i<number_stepper; i++)
+	{
+	    err = CPhidgetStepper_create (&(steppers[i].handle));
+	    if (err != 0)
+	    {
+		    ROS_ERROR("error create the Phidget stepper controller device of serial number %d", steppers[i].serial);
+		    stepperError = 1;
+	    }
+	    
+	    err = CPhidget_open((CPhidgetHandle)steppers[i].handle, steppers[i].serial);
+	    if (err != 0)
+	    {
+		    ROS_ERROR("error opening the Phidget stepper controller device of serial number %d", steppers[i].serial);
+		    stepperError = 1;
+	    }
+	    if((err = CPhidget_waitForAttachment((CPhidgetHandle)steppers[i].handle, 10000)))
+	    {
+		    ROS_ERROR("Problem waiting for attachment of Phidget stepper controller of serial number %d", steppers[i].serial);
+		    stepperError = 1;
+	    }
+	    if(err = CPhidgetStepper_setEngaged((CPhidgetHandle)steppers[i].handle, 0, 1))
+	    {
+		    ROS_ERROR("Problem engaging Phidget stepper controller of serial number %d", steppers[i].serial);
+		    stepperError = 1;
+	    }
+	}
+}
+int main(int argc, char **argv)
+{
+	ros::init(argc, argv, "phidget_stepper");
+	ros::NodeHandle n;
+	ros::NodeHandle n_private("~");
+
+
+	//Read yalm file parameters.
+	XmlRpc::XmlRpcValue stepper_list;
+   	n_private.param("stepper_list", stepper_list, stepper_list);
+
+
+	//Read information about the servos
+	steppers = (stepper*) malloc(stepper_list.size() * sizeof(stepper));
+	init_servos_db(stepper_list, n_private);
+
+
+    // Initialize all the boards using the serial numbers we got.
+    init_stepper_boards();
+
+
+    //Subscribe to the topic
+    ros::Subscriber stepperPos= n.subscribe("stepperPosition", 100, setStepperPosition);
+
+
+    ros::Rate rate(50);
+    
+    while(ros::ok())
+    {
+        ros::spinOnce();
+        rate.sleep();
+    }
+	
+	free(steppers);
+	return 0;
+}

@@ -41,7 +41,7 @@
 <group if="$(arg FrontCamera)">
 	  <param name="PTZ/image_raw/compressed/jpeg_quality" type="int" value="$(arg cameraFront_JpegQuality)"/>
 
-	  <node pkg="corobot_camera" name="PTZcamera" type="dynamic_sender" ns="/PTZ" output="screen">
+	  <node pkg="corobot_camera" name="PTZcamera" type="dynamic_sender" ns="/PTZ">
 		<param name="device" value="$(arg cameraFront_port)"/>
 		<param name="camera_parameter_file" value="$(arg cameraFront_parameter_file)" />
 		<param name="topic" value="$(arg cameraFront_topic)" />
