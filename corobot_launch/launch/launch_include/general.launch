@@ -7,6 +7,9 @@
 <arg name="cameraFront_jpeg_compression" value="1"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it. This should be the same as in the camera.launch file-->
 <arg name="cameraRear_jpeg_compression" value="1"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it. This should be the same as in the camera.launch file -->
 
+<!--***** LCD Diagnostic *****-->
+<!-- Only useful if your robot has an LCD display -->
+<arg name="LCD" value="1"/> <!-- 1 if you have an LCD display, 0 if not -->
 
 <!--***** Kinect *****-->
 
@@ -87,6 +90,10 @@
     <rosparam command="load" 
               file="$(find corobot_diagnostics)/config/corobot_analyzer.yaml" />
   </node>
+  
+  <group if="$(arg LCD)">
+	  <node pkg="corobot_diagnostics" name="diagnosticLCD" type="corobot_diagnostics" />
+  </group>
 
 </launch>
 
