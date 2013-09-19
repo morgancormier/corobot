@@ -12,23 +12,14 @@ ros::Time current_time_encoder, last_time_encoder; //save the time for the curre
 double DistancePerCount; //to calculate - distance in meter for one count of the encoders.The Phidget C API gives the number of encoder ticks *4.
 double lengthBetweenTwoWheels; //distance in meters between the left and right wheels, taken in the middle.
  
-/*Measures for Corobot:
- *Diameter of wheel = 10.5 cm
- *Distance between wheels = 21cm
- *ticks per revolution 12*52
 
-  Measures forExplorer:
- *Diameter of wheel = 20.32 cm
- *Distance between wheels = 48.895cm
- *ticks per revolution ??
- */
 
 double x, y, th; // the position of the robot in the plan, and the orientation
 double dx = 0, dy = 0, dth = 0; // the difference of position and orientation between the two last encoder measurements, in the robot's frame
 double dela_time; //time difference between the two last encoder measurement received
 
 bool firstTime = true; // true if we are waiting for our first encoder measurement
-bool isExplorer, isCorobot4WD;
+bool is4WheelDrive;
 bool publish_odom_tf; //if true publish the transform from odom to base_footprint
 bool odometry_activated = true;
 
@@ -81,10 +72,7 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
  */
 {
 	//publish the transform between the base_link and the laser range finder
-	if (isExplorer)
-		broadcaster.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.2413, 0, 0)),ros::Time::now(),"base_link", "laser"));
-	else
-		broadcaster.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.15, 0, 0)),ros::Time::now(),"base_link", "laser"));
+	broadcaster.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.15, 0, 0)),ros::Time::now(),"base_link", "laser"));
 
 	//since all odometry is 6DOF we'll need a quaternion created from yaw
 	geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);
@@ -164,11 +152,15 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
 
 
 int main(int argc, char** argv){
+  int ticks_meter; 
+
   ros::init(argc, argv, "corobot_state_tf");
   ros::NodeHandle n;
   ros::NodeHandle nh("~");
-  nh.param("Explorer", isExplorer, false);
-  nh.param("Corobot4WD", isCorobot4WD, false);
+  
+  nh.param("4WheelDrive", is4WheelDrive, false);
+  nh.param("base_width", lengthBetweenTwoWheels, 0.25); // The length between the left and right wheel
+  nh.param("ticks_meter", ticks_meter, 9400); // the number of the encoder ticks per meter
   nh.param("publish_odom_tf", publish_odom_tf, true);
 
   dynamic_reconfigure::Server<corobot_state_tf::corobot_state_tfConfig> server;
@@ -178,21 +170,13 @@ int main(int argc, char** argv){
   server.setCallback(f);
 
   //Set up the distance per encoder ticks and the length between two wheels variable
-  if (isExplorer)
+  
+  DistancePerCount = 1.0/(float)ticks_meter;
+  if(is4WheelDrive)
   {
-	DistancePerCount = (M_PI*0.2032)/(500.0*59.0*4.0);
-	lengthBetweenTwoWheels = 0.48895;
+    lengthBetweenTwoWheels *= 1.5; // This is to compensate the fact that we don't have a differential drive but a skid system
   }
-  else if (isCorobot4WD)
-  {
-	DistancePerCount = (M_PI*0.109)/(12.0*52.0*4.0);
-	lengthBetweenTwoWheels = 0.31 + 0.03; //length between left front and rear right wheel, plus a little more to compensate for the slipping 
-  }
-  else //Corobot 2WD
-  {
-	DistancePerCount = (M_PI*0.109)/(12.0*52.0*4.0);
-	lengthBetweenTwoWheels = 0.282;
-  }
+
 
   //Setup the subscriber and publisher of topics
   ros::Subscriber sub = n.subscribe("/position_data", 1000, WheelCallback);
@@ -210,7 +194,7 @@ int main(int argc, char** argv){
 	{
 		publish_odometry(odom_pub, odom_broadcaster, broadcaster);
 	    	r.sleep();
-    	}
+    }
 	else
 	    r_deactivated.sleep();
   }

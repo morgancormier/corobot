@@ -1,7 +1,7 @@
 <launch>
 
 
-<!--***** ARM *****-->
+<!--***** ARM TYPE *****-->
 
 <arg name="Lynxmotion-al5a" value="0"/> <!-- Put the variable to 1 if you have an lynxmotion- al5a arm. See "SSC32 Motor Controller" section bellow for parameters -->
 <arg name="PhantomX-Pincher" value="0"/> <!-- Put the variable to 1 if you have a PhantomX - Pincher -->
@@ -14,22 +14,15 @@
 <!--***** SSC32 Motor Controller *****-->
 
 <arg name="ssc32" value="0"/> <!-- 1 if you have the ssc32 motor controller, 0 if you don't -->
-<arg name="ssc32_port" value="/dev/ttyS1"/> <!-- Port of the ssc32 motor controller -->
+<arg name="ssc32_port" value="/dev/ttyS3"/> <!-- Port of the ssc32 motor controller -->
 
 
 
 <!--***** Phidget Servo Controller *****-->
 
 <arg name="PhidgetServoController" value="0"/> <!-- 1 if you have the Phidget Servo Controller, 0 if you don't -->
-<arg name="psc_firstSerialNumber" value="-1"/> <!-- Only useful if you have 2 phidget Servo controllers, put the serial number of the first phidget device. -1 to indicate the software to use the first recognized device on the network -->
-<arg name="psc_secondSerialNumber" value="-1"/>  <!-- Only useful if you have 2 phidget Servo controllers, put the serial number of the second phidget device. -1 to indicate the software to use the second recognized device on the network -->
 <arg name="offset" value="-3.0"/> <!-- Value in Degrees corresponding to the offset of the shoulder and elbow angle between the software 90 degrees position and the true 90 degrees position of the arm
  for example -3.0 will make the arm vertical with a shoulder angle of 87 degrees-->
-<arg name="one_arm" value="1"/> <!-- 1 if you have one arm, 0 if you don't. If you have two arms connected, put this value to 0-->
-<arg name="two_arms" value="0"/> <!-- 1 if you have two arms, 0 if you don't. If you have only arm connected, put this value to 0-->
-
-
-
 
 
 
@@ -53,23 +46,9 @@
 
   <group if="$(arg corobot_arm_phidget)">
 	<group if="$(arg PhidgetServoController)">
-	  	<group if="$(arg one_arm)">
-	  	
 			<include file="$(find corobot_arm)/launch/corobot_arm_phidget_oneArm.launch" >
 				<arg name="offset" value="$(arg offset)"/>
 			</include>
-
-		</group> 
-
-	  	<group if="$(arg two_arms)">
-
-	  		<include file="$(find corobot_arm)/launch/corobot_arm_phidget_twoArm.launch" >
-				<arg name="offset" value="$(arg offset)"/>
-				<arg name="psc_firstSerialNumber" value="$(arg psc_firstSerialNumber)"/>
-				<arg name="psc_secondSerialNumber" value="$(arg psc_secondSerialNumber)"/>
-			</include>
-
-		</group>
 	  </group>
   </group>
   

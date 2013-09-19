@@ -7,6 +7,7 @@
 <arg name="cameraFront_jpeg_compression" value="1"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it. This should be the same as in the camera.launch file-->
 <arg name="cameraRear_jpeg_compression" value="1"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it. This should be the same as in the camera.launch file -->
 
+
 <!--***** Kinect *****-->
 
 <arg name="kinect" value="0" />
@@ -33,11 +34,10 @@
 
 
 
-<!--***** Hector SLAM *****--> <!-- This needs to have the Hokuyo and phidget Interface Kit activated, the stack hector_slam downloaded and of course having a Laser Range Finder -->
+<!--***** Hector SLAM *****--> <!-- This needs to have the Hokuyo activated, the stack hector_slam downloaded and of course having a Laser Range Finder -->
 
 <arg name="slam_robot" value="0" /> <!-- Start the slam algorithm  -->
 <arg name="slam_GUI" value="0" /> <!-- display the slam map in corobot_teleop and also start rviz-->
-
 
 
 

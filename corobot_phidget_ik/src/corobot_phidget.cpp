@@ -168,7 +168,7 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
     }
     else if(Index >= firstSonarInput && Index <= lastSonarInput && sonar_pub)//sonar
     {
-	corobot_msgs::SensorMsg data;
+	    corobot_msgs::SensorMsg data;
         data.type = data.ULTRASOUND;
         data.index = Index;
         
@@ -179,7 +179,7 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
     else if(other_pub) // We don't know what sensor it is, but we publish
     {
         corobot_msgs::SensorMsg data;
-	data.type = data.OTHER;
+	    data.type = data.OTHER;
     	data.value = Value;
     	data.index = Index;
         other_pub.publish(data);
