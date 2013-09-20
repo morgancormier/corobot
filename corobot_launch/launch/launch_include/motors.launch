@@ -4,8 +4,8 @@
 <!--***** ROBOT *****-->
 
 <!-- Note that it is assumed that if you don't have an explorer or a corobot 4 wheel drive you have a corobot 2 wheel drive -->
-<arg name="2WheelDrive" value="1"/> <!-- 1 if you have a 2wheel drive, with a caster -->
-<arg name="4WheelDrive" value="0"/> <!-- 1 if you have a 4 Wheel Drive -->
+<arg name="TwoWheelDrive" value="1"/> <!-- 1 if you have a 2wheel drive, with a caster -->
+<arg name="FourWheelDrive" value="0"/> <!-- 1 if you have a 4 Wheel Drive -->
 <arg name="base_width" value="0.25"/> <!-- 1 The length between the left and right wheel, taken at about the middle of the wheels, in meters-->
 <arg name="ticks_meter" value="9400"/> <!-- The number of encoder ticks per meter. This depends on the wheels and the encoders you have. See the ROS_Users_Guide.pdf that CoroWare distributes for more information on how to find this value for your robot-->
 
@@ -32,8 +32,8 @@
 	<node pkg="corobot_state_tf" name="corobot_state_tf" type="corobot_state_tf">
 		<param name="ticks_meter" type="int" value="$(arg ticks_meter)"/>
 		<param name="base_width" type="double" value="$(arg base_width)"/>
-		<param name="2WheelDrive" type="bool" value="$(arg 2WheelDrive)"/>
-		<param name="4WheelDrive" type="bool" value="$(arg 4WheelDrive)"/>
+		<param name="TwoWheelDrive" type="bool" value="$(arg TwoWheelDrive)"/>
+		<param name="FourWheelDrive" type="bool" value="$(arg FourWheelDrive)"/>
 		<param name="publish_odom_tf" type="bool" value="1"/>
 	</node>
   </group>

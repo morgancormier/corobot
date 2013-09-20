@@ -114,9 +114,9 @@ def move(request):
 
     # on some motors the left and right motors have been inverted by mistake and the robot goes backward instead of forward. This is the solution for this problem
     if motors_inverted == True:
-	    temp = rightSpeed
+        temp = rightSpeed
         rightSpeed = -leftSpeed
-	    leftSpeed = -temp
+        leftSpeed = -temp
 
     rospy.logdebug(
             "Left: %d:%d, Right: %d:%d, Acceleration: %d", 

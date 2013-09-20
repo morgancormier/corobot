@@ -158,7 +158,7 @@ int main(int argc, char** argv){
   ros::NodeHandle n;
   ros::NodeHandle nh("~");
   
-  nh.param("4WheelDrive", is4WheelDrive, false);
+  nh.param("FourWheelDrive", is4WheelDrive, false);
   nh.param("base_width", lengthBetweenTwoWheels, 0.25); // The length between the left and right wheel
   nh.param("ticks_meter", ticks_meter, 9400); // the number of the encoder ticks per meter
   nh.param("publish_odom_tf", publish_odom_tf, true);
