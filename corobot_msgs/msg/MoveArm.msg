@@ -11,7 +11,8 @@ uint8 ELBOW = 2
 uint8 WRIST_FLEX = 3
 uint8 WRIST_ROTATION = 3
 uint8 GRIPPER = 4
-
+uint8 LEFT_WHEEL = 5 # only used in case the left wheel is a stepper motor
+uint8 RIGHT_WHEEL = 6 # only used in case the right wheel is a stepper motor
 # Index is the index from the list of possible index. 
 int8 index
 

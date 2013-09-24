@@ -6,11 +6,11 @@
 # specify the serial number of the board corresponding to the left and right wheel but leave the other values to -1.
 
 stepper_list: {
-    leftWheel: {serial: -1}, #id: 0
-    rightWheel: {serial: -1}, #id: 1
-    armBaseRotation: {serial: -1}, #id: 2
-    armShoulder: {serial: -1}, #id: 3
-    armElbow: {serial: -1}, #id: 4
-    armWrist: {serial: -1}, #id: 5
-    armGripper: {serial: -1} #id: 6
+    armBaseRotation: {serial: -1}, #id: 0
+    armShoulder: {serial: -1}, #id: 1
+    armElbow: {serial: -1}, #id: 2
+    armWrist: {serial: -1}, #id: 3
+    armGripper: {serial: -1}, #id: 4
+    leftWheel: {serial: -1}, #id: 5
+    rightWheel: {serial: -1} #id: 6
 }

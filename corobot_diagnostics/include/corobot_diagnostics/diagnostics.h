@@ -13,6 +13,7 @@
 #define SSC32_ERROR_CONNECTION "Can't connected to the ssc32 controller - Please make sure it is connected, that the port is correct and that you have the permissions"
 #define ARBOTIX_ERROR_CONNECTION ""
 #define PHIDGET_SERVO_ERROR_CONNECTION "Can't connect to the Phidget Servo controller - Please make sure it is connected and the Phidgets library is installed"
+#define PHIDGET_STEPPER_ERROR_CONNECTION "Can't connect to the Phidget Stepper controller - Please make sure it is connected and that the serial number given is correct"
 #define ERROR_MOVING_ARM "Can't move the arm - Please make sure the servo motors are connected to the board"
 #define ARM_OUT_OF_LIMIT ""
 #define OBSTACLE_HIT ""
