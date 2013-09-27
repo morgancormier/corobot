@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<package>
+  <name>corobot_gazebo</name>
+  <version>1.0.0</version>
+  <description> Interface to control a corobot on Gazebo </description>
+
+  <maintainer email="mcormier@coroware.com">Morgan Cormier</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/corobot_gazebo</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>corobot_msgs</build_depend>
+  <build_depend>gazebo_msgs</build_depend>
+  <build_depend>tf</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>corobot_msgs</run_depend>
+  <run_depend>gazebo_msgs</run_depend>
+  <run_depend>tf</run_depend>
+
+</package>
+
+
+
+
+
+<package>
+  <description brief="corobot_gazebo">
+
+     corobot_gazebo
+
+  </description>
+  <author>Morgan</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/corobot_gazebo</url>
+  <depend package="roscpp"/>
+  <depend package="corobot_msgs"/>
+  <depend package="std_msgs"/>
+  <depend package="gazebo_msgs"/>
+  <depend package="tf"/>
+
+</package>
+
+

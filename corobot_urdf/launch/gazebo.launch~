@@ -1,0 +1,28 @@
+<launch>
+
+ 
+  <param name="robot_description" textfile="$(find corobot_urdf)/robots/corobot_urdf.URDF" />
+  <rosparam file="$(find corobot_urdf)/config/config_file.yaml" command="load" />
+
+  <include file="$(find gazebo_worlds)/launch/empty_world.launch" />
+
+  <node name="spawn_model" pkg="gazebo" type="spawn_model" args="-file $(find corobot_urdf)/robots/corobot_urdf.URDF -urdf -model corobot -z 0.125" output="screen" />
+
+  <node name="fake_joint_calibration" pkg="rostopic" type="rostopic" args="pub /calibrated std_msgs/Bool true" />
+
+  <node pkg="pr2_controller_manager" type="spawner" 
+	args="--wait-for=/calibrated corobot_left_rear_wheel_controller corobot_right_rear_wheel_controller corobot_left_front_wheel_controller corobot_right_front_wheel_controller" 
+	name="spawn_dynamix" output="screen">
+  </node>
+
+  <node name="corobot_gazebo_control" pkg="corobot_gazebo" type="gazebo_control"/>
+
+  <node pkg="corobot_teleop" name="GUI" type="corobot_teleop" />
+ 
+  <node pkg="topic_tools" name="throttle" type="throttle" args="messages imu_data_fast 50.0 imu_data" />
+    
+  <node pkg="differential_drive" type="twist_to_motors.py" name="twist_to_motors" output="screen">
+  	<rosparam param="base_width">0.35</rosparam>
+  </node>
+  
+</launch>

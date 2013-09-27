@@ -1,0 +1,637 @@
+<?xml version="1.0"?>
+
+<robot name="corobot"
+xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
+	<!-- base_footprint is a fictitious link(frame) that is on the ground right below base_link origin,
+	     navigation stack depends on this frame -->
+	<link name="base_footprint">
+	    <inertial>
+		<mass value="0.0001" />
+		<origin xyz="0 0 0" />
+		<inertia ixx="0.0001" ixy="0.0" ixz="0.0"
+		         iyy="0.0001" iyz="0.0" 
+		         izz="0.0001" />
+	    </inertial>
+	    
+	    <visual>
+		<origin xyz="0 0 0" rpy="0 0 0" />
+		<geometry>
+		    <box size="0.001 0.001 0.001" />
+		</geometry>
+		<material name="Green" />
+	    </visual>
+	    
+	    <collision>
+		<origin xyz="0 0 0.128" rpy="0 0 0" />
+		<geometry>
+		  <box size="0.001 0.001 0.001" />
+		</geometry>
+	    </collision>
+	</link>
+
+
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="3.2953E-17 0.0023067 -0.012977"
+        rpy="0 0 0" />
+      <mass
+        value="8.60299" />
+      <inertia
+        ixx="0.0072395"
+        ixy="0"
+        ixz="0"
+        iyy="0.006059"
+        iyz="0"
+        izz="0.011702" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/Base.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0.47 0.95 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/Base.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+	<joint name="base_footprint_joint" type="fixed">
+	    <origin xyz="0 0 0" rpy="0 0 0" />
+	    <parent link="base_footprint"/>
+	    <child link="base_link" />
+	
+	</joint>
+
+
+<gazebo reference="base_link">
+    <material>Gazebo/Custom_Blue</material>
+  </gazebo>
+
+
+    <gazebo>
+      <plugin name="imu_controller" filename="libgazebo_ros_imu.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>50</updateRate>
+        <bodyName>base_link</bodyName>
+        <topicName>imu_data_fast</topicName>
+        <gaussianNoise>0.1</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset> 
+        <rpyOffset>0 0.0 0</rpyOffset>
+      </plugin>
+    </gazebo>
+
+
+  <link
+    name="cover">
+    <inertial>
+      <origin
+        xyz="8.5617E-17 0.000625 -3.5469E-19"
+        rpy="0 0 0" />
+      <mass
+        value="0.074628" />
+      <inertia
+        ixx="0.00042841"
+        ixy="0"
+        ixz="0"
+        iyy="0.0008568"
+        iyz="0"
+        izz="0.00042841" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/cover.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0.47 0.95 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/cover.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+<gazebo reference="cover">
+    <material>Gazebo/Custom_Blue</material>
+  </gazebo>
+
+  <joint
+    name="cover_joint"
+    type="fixed">
+    <origin
+      xyz="0 0 0.0508"
+      rpy="1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="cover" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+  <link
+    name="orbit">
+    <inertial>
+      <origin
+        xyz="-1.0166E-09 0.032926 0.0012666"
+        rpy="0 0 0" />
+      <mass
+        value="0.24684" />
+      <inertia
+        ixx="0.00017194"
+        ixy="0"
+        ixz="0"
+        iyy="0.00014928"
+        iyz="0"
+        izz="0.00016942" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/orbit.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.3 0.3 0.3 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/orbit.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+<gazebo reference="orbit">
+    <material>Gazebo/Custom_Grey</material>
+  </gazebo>
+
+  <joint
+    name="orbit_joint"
+    type="continuous">
+    <origin
+      xyz="0 0 0.02665"
+      rpy="1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="orbit" />
+    <axis
+      xyz="0 -1 0" />
+  </joint>
+
+  <link
+    name="front_camera">
+    <inertial>
+      <origin
+        xyz="2.5489E-06 0.0021357 0.0011883"
+        rpy="0 0 0" />
+      <mass
+        value="0.037911" />
+      <inertia
+        ixx="6.8429E-06"
+        ixy="0"
+        ixz="0"
+        iyy="2.0245E-05"
+        iyz="0"
+        izz="2.6274E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/front_camera.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.3 0.3 0.3 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/front_camera.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="front_camera_frame">
+    <inertial>
+	<mass value="0.0001" />
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<inertia ixx="0.0001" ixy="0.0" ixz="0.0"
+	         iyy="0.0001" iyz="0.0" 
+	         izz="0.0001" />
+    </inertial>
+    
+    <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	    <box size="0.001 0.001 0.001" />
+	</geometry>
+	<material name="Green" />
+    </visual>
+    
+    <collision>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <box size="0.001 0.001 0.001" />
+	</geometry>
+    </collision>
+  </link>
+
+  <joint
+    name="front_camera_joint"
+    type="fixed">
+    <origin
+      xyz="0 -0.14288 0.000635"
+      rpy="1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="front_camera" />
+    <axis
+
+      xyz="0 0 0" />
+  </joint>
+
+  <joint
+    name="front_camera_frame_joint"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="-1.5708 -1.5708 0" />
+    <parent
+      link="front_camera" />
+    <child
+      link="front_camera_frame" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+    
+<gazebo reference="front_camera">
+    <material>Gazebo/Custom_Grey</material>
+</gazebo>
+<gazebo reference="front_camera_frame">
+    <sensor type="camera" name="camera1">
+      <update_rate>30.0</update_rate>
+      <camera>
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>PTZ</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>front_camera_frame</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+
+  <link
+    name="front_left_wheel">
+    <inertial>
+      <origin
+        xyz="-1.6653E-16 -3.6082E-16 0.030326"
+        rpy="0 0 0" />
+      <mass
+        value="0.90909" />
+      <inertia
+        ixx="0.0017848"
+        ixy="0"
+        ixz="0"
+        iyy="0.0017848"
+        iyz="0"
+        izz="0.0031399" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/front_left_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/front_left_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+<gazebo reference="front_left_wheel">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <joint
+    name="front_left_wheel_joint"
+    type="continuous">
+    <origin
+      xyz="0.1316 -0.1016 -0.025369"
+      rpy="1.5708 -0.95515 1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="front_left_wheel" />
+    <axis
+      xyz="0 0 1" />
+<anchor xyz="0 0 0" />
+            <limit effort="30" velocity="100" />
+            <joint_properties damping="0.0" friction="1.0" />
+  </joint>
+
+  <link
+    name="front_right_wheel">
+    <inertial>
+      <origin
+        xyz="7.5392E-11 -2.6566E-11 -0.030319"
+        rpy="0 0 0" />
+      <mass
+        value="0.90961" />
+      <inertia
+        ixx="0.0017853"
+        ixy="0"
+        ixz="0"
+        iyy="0.0017853"
+        iyz="0"
+        izz="0.0031406" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/front_right_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/front_right_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+<gazebo reference="front_right_wheel">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <joint
+    name="front_right_wheel_joint"
+    type="continuous">
+    <origin
+      xyz="-0.1316 -0.1016 -0.025432"
+      rpy="1.5708 -0.10079 1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="front_right_wheel" />
+<anchor xyz="0 0 0" />
+            <limit effort="30" velocity="100" />
+            <joint_properties damping="0.0" friction="1.0" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+
+  <link
+    name="rear_left_wheel">
+    <inertial>
+      <origin
+        xyz="-1.6653E-16 -3.4694E-16 0.030326"
+        rpy="0 0 0" />
+      <mass
+        value="0.90909" />
+      <inertia
+        ixx="0.0017848"
+        ixy="0"
+        ixz="0"
+        iyy="0.0017848"
+        iyz="0"
+        izz="0.0031399" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/rear_left_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/rear_left_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+<gazebo reference="rear_left_wheel">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <joint
+    name="rear_left_wheel_joint"
+    type="continuous">
+    <origin
+      xyz="0.1316 0.1016 -0.025369"
+      rpy="-1.5708 1.2267 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="rear_left_wheel" />
+    <axis
+      xyz="0 0 1" />
+<anchor xyz="0 0 0" />
+            <limit effort="30" velocity="100" />
+            <joint_properties damping="0.0" friction="1.0" />
+  </joint>
+
+  <link
+    name="rear_right_wheel">
+    <inertial>
+      <origin
+        xyz="7.5392E-11 -2.6566E-11 -0.030319"
+        rpy="0 0 0" />
+      <mass
+        value="0.90961" />
+      <inertia
+        ixx="0.0017853"
+        ixy="0"
+        ixz="0"
+        iyy="0.0017853"
+        iyz="0"
+        izz="0.0031406" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/rear_right_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf/meshes/rear_right_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+<gazebo reference="rear_right_wheel">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <joint
+    name="rear_right_wheel_joint"
+    type="continuous">
+    <origin
+      xyz="-0.1316 0.1016 -0.025432"
+      rpy="1.5708 0.23163 1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="rear_right_wheel" />
+    <axis
+      xyz="0 0 1" />
+<anchor xyz="0 0 0" />
+            <limit effort="30" velocity="100" />
+            <joint_properties damping="0.0" friction="1.0" />
+  </joint>
+
+<transmission type="pr2_mechanism_model/SimpleTransmission" name="corobot_rear_left_wheel_trans">
+    <actuator name="rear_left_motor" />
+    <joint name="rear_left_wheel_joint" />
+    <mechanicalReduction>1.0</mechanicalReduction>
+    <motorTorqueConstant>1.0</motorTorqueConstant>
+ </transmission>
+
+<transmission type="pr2_mechanism_model/SimpleTransmission" name="corobot_rear_right_wheel_trans">
+    <actuator name="rear_right_motor" />
+    <joint name="rear_right_wheel_joint" />
+    <mechanicalReduction>1.0</mechanicalReduction>
+    <motorTorqueConstant>1.0</motorTorqueConstant>
+ </transmission>
+
+<transmission type="pr2_mechanism_model/SimpleTransmission" name="corobot_front_left_wheel_trans">
+    <actuator name="front_left_motor" />
+    <joint name="front_left_wheel_joint" />
+    <mechanicalReduction>1.0</mechanicalReduction>
+    <motorTorqueConstant>1.0</motorTorqueConstant>
+ </transmission>
+
+<transmission type="pr2_mechanism_model/SimpleTransmission" name="corobot_front_right_wheel_trans">
+    <actuator name="front_right_motor" />
+    <joint name="front_right_wheel_joint" />
+    <mechanicalReduction>1.0</mechanicalReduction>
+    <motorTorqueConstant>1.0</motorTorqueConstant>
+ </transmission>
+
+<gazebo>   
+     <plugin name="gazebo_ros_controller_manager" filename="libgazebo_ros_controller_manager.so">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>1000.0</updateRate>
+          <robotNamespace></robotNamespace>
+          <robotParam>robot_description</robotParam>
+          <interface:audio name="gazebo_ros_controller_manager_dummy_iface" />
+     </plugin>
+
+</gazebo>
+</robot>

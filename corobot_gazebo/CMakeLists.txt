@@ -1,0 +1,24 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(corobot_gazebo)
+
+find_package(catkin REQUIRED COMPONENTS corobot_msgs std_msgs tf roscpp message_generation geometry_msgs)
+
+  add_message_files(FILES
+    ModelStates.msg
+  )
+
+  # Actually generate the language-specific message and service files
+  generate_messages(DEPENDENCIES geometry_msgs)
+
+catkin_package(
+   INCLUDE_DIRS include
+   LIBRARIES ${PROJECT_NAME}
+   CATKIN_DEPENDS gazebo_msgs geometry_msgs message_generation)
+
+
+include_directories(include ${catkin_INCLUDE_DIRS})
+
+add_executable(gazebo_control src/gazebo_control.cpp)
+target_link_libraries(gazebo_control ${catkin_LIBRARIES})
+add_dependencies(gazebo_control corobot_msgs_gencpp)
+add_dependencies(gazebo_control corobot_gazebo_gencpp)

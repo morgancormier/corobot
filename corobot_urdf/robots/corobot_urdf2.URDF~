@@ -1,0 +1,414 @@
+<robot
+  name="corobot_urdf2">
+  <link
+    name="Base">
+    <inertial>
+      <origin
+        xyz="3.2953E-17 0.0023067 -0.012977"
+        rpy="0 0 0" />
+      <mass
+        value="0.60299" />
+      <inertia
+        ixx="0.0072395"
+        ixy="-2.1729E-18"
+        ixz="1.731E-18"
+        iyy="0.006059"
+        iyz="2.4683E-05"
+        izz="0.011702" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/Base.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0.47 0.95 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/Base.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="cover">
+    <inertial>
+      <origin
+        xyz="8.5617E-17 0.000625 -3.5469E-19"
+        rpy="0 0 0" />
+      <mass
+        value="0.074628" />
+      <inertia
+        ixx="0.00042841"
+        ixy="-3.4066E-39"
+        ixz="2.068E-22"
+        iyy="0.0008568"
+        iyz="8.0779E-26"
+        izz="0.00042841" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/cover.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0.47 0.95 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/cover.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="cover"
+    type="fixed">
+    <origin
+      xyz="0 0 0.0508"
+      rpy="1.5708 0 0" />
+    <parent
+      link="Base" />
+    <child
+      link="cover" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="orbit">
+    <inertial>
+      <origin
+        xyz="-1.0166E-09 0.032926 0.0012666"
+        rpy="0 0 0" />
+      <mass
+        value="0.24684" />
+      <inertia
+        ixx="0.00017194"
+        ixy="-2.0369E-12"
+        ixz="-1.3197E-12"
+        iyy="0.00014928"
+        iyz="9.2175E-06"
+        izz="0.00016942" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/orbit.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.3 0.3 0.3 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/orbit.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="orbit"
+    type="continuous">
+    <origin
+      xyz="0 0 0.02665"
+      rpy="1.5708 0 0" />
+    <parent
+      link="Base" />
+    <child
+      link="orbit" />
+    <axis
+      xyz="0 -1 0" />
+  </joint>
+  <link
+    name="front_camera">
+    <inertial>
+      <origin
+        xyz="2.5489E-06 0.0021357 0.0011883"
+        rpy="0 0 0" />
+      <mass
+        value="0.037911" />
+      <inertia
+        ixx="6.8429E-06"
+        ixy="1.143E-09"
+        ixz="-5.7864E-10"
+        iyy="2.0245E-05"
+        iyz="-3.3442E-07"
+        izz="2.6274E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/front_camera.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.3 0.3 0.3 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/front_camera.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="front_camera"
+    type="fixed">
+    <origin
+      xyz="0 -0.14288 0.000635"
+      rpy="1.5708 0 0" />
+    <parent
+      link="Base" />
+    <child
+      link="front_camera" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="front_left_wheel">
+    <inertial>
+      <origin
+        xyz="-1.6653E-16 -3.6082E-16 0.030326"
+        rpy="0 0 0" />
+      <mass
+        value="0.90909" />
+      <inertia
+        ixx="0.0017848"
+        ixy="4.3368E-19"
+        ixz="1.651E-19"
+        iyy="0.0017848"
+        iyz="1.5961E-19"
+        izz="0.0031399" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/front_left_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/front_left_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="front_left_wheel"
+    type="continuous">
+    <origin
+      xyz="0.1316 -0.1016 -0.025369"
+      rpy="1.5708 -0.95515 1.5708" />
+    <parent
+      link="Base" />
+    <child
+      link="front_left_wheel" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="front_right_wheel">
+    <inertial>
+      <origin
+        xyz="7.5392E-11 -2.6566E-11 -0.030319"
+        rpy="0 0 0" />
+      <mass
+        value="0.90961" />
+      <inertia
+        ixx="0.0017853"
+        ixy="-1.9728E-13"
+        ixz="-1.0555E-12"
+        iyy="0.0017853"
+        iyz="3.7192E-13"
+        izz="0.0031406" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/front_right_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/front_right_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="front_right_wheel"
+    type="continuous">
+    <origin
+      xyz="-0.1316 -0.1016 -0.025432"
+      rpy="1.5708 -0.10079 1.5708" />
+    <parent
+      link="Base" />
+    <child
+      link="front_right_wheel" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="rear_left_wheel">
+    <inertial>
+      <origin
+        xyz="-1.6653E-16 -3.4694E-16 0.030326"
+        rpy="0 0 0" />
+      <mass
+        value="0.90909" />
+      <inertia
+        ixx="0.0017848"
+        ixy="6.5052E-19"
+        ixz="3.6206E-20"
+        iyy="0.0017848"
+        iyz="6.1235E-20"
+        izz="0.0031399" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/rear_left_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/rear_left_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="rear_left_wheel"
+    type="continuous">
+    <origin
+      xyz="0.1316 0.1016 -0.025369"
+      rpy="-1.5708 1.2267 -1.5708" />
+    <parent
+      link="Base" />
+    <child
+      link="rear_left_wheel" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="rear_right_wheel">
+    <inertial>
+      <origin
+        xyz="7.5392E-11 -2.6566E-11 -0.030319"
+        rpy="0 0 0" />
+      <mass
+        value="0.90961" />
+      <inertia
+        ixx="0.0017853"
+        ixy="-1.9728E-13"
+        ixz="-1.0555E-12"
+        iyy="0.0017853"
+        iyz="3.7192E-13"
+        izz="0.0031406" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/rear_right_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://corobot_urdf2/meshes/rear_right_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="rear_right_wheel"
+    type="continuous">
+    <origin
+      xyz="-0.1316 0.1016 -0.025432"
+      rpy="1.5708 0.23163 1.5708" />
+    <parent
+      link="Base" />
+    <child
+      link="rear_right_wheel" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+</robot>

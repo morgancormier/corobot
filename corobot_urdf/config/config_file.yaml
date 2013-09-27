@@ -1,0 +1,35 @@
+corobot_left_rear_wheel_controller:
+  type: robot_mechanism_controllers/JointVelocityController
+  joint: rear_left_wheel_joint
+  pid:
+    p: 0.04
+    i: 0.002
+    d: 0.001
+    i_clamp: 2.0
+
+corobot_right_rear_wheel_controller:
+  type: robot_mechanism_controllers/JointVelocityController
+  joint: rear_right_wheel_joint
+  pid:
+    p: 0.04
+    i: 0.002
+    d: 0.001
+    i_clamp: 2.0
+
+corobot_left_front_wheel_controller:
+  type: robot_mechanism_controllers/JointVelocityController
+  joint: front_left_wheel_joint
+  pid:
+    p: 0.04
+    i: 0.002
+    d: 0.001
+    i_clamp: 2.0
+
+corobot_right_front_wheel_controller:
+  type: robot_mechanism_controllers/JointVelocityController
+  joint: front_right_wheel_joint
+  pid:
+    p: 0.04
+    i: 0.002
+    d: 0.001
+    i_clamp: 2.0

@@ -1,0 +1,8 @@
+corobot_controller:
+  type: robot_mechanism_controllers/JointVelocityController
+  joint: rear_left_wheel_joint
+  pid: &kinect_position_gains
+    p: 2.0
+    i: 0.5
+    d: 0.1
+    i_clamp: 10.0

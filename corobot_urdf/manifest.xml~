@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<package>
+  <name>corobot_urdf</name>
+  <version>1.0.0</version>
+  <description> Corobot urdf </description>
+
+  <maintainer email="mcormier@coroware.com">Morgan Cormier</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/corobot_urdf</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>gazebo</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>corobot_msgs</build_depend>
+  <build_depend>gazebo_msgs</build_depend>
+  <build_depend>tf</build_depend>
+
+  <run_depend>gazebo</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>corobot_msgs</run_depend>
+  <run_depend>gazebo_msgs</run_depend>
+  <run_depend>tf</run_depend>
+
+</package>
+
+
+<package>
+  <description brief="corobot_urdf">corobot_urdf2</description>
+  <depend package="gazebo" />
+  <author>me</author>
+  <license>BSD</license>
+
+  <depend package="gazebo"/>
+<export>
+    <gazebo gazebo_media_path="${prefix}" />
+</export>
+</package>

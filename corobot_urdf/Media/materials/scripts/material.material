@@ -1,0 +1,25 @@
+material Gazebo/Custom_Blue
+{
+	technique
+	{
+		pass
+		{
+			ambient 0 0.47 0.95 1
+			diffuse 0 0.47 0.95 1 
+      specular 0.1 0.1 0.1 1 5.0
+		}
+	}
+}
+
+material Gazebo/Custom_Grey
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.3 0.3 0.3 1
+			diffuse 0.3 0.3 0.3 1 
+      specular 0.1 0.1 0.1 1 5.0
+		}
+	}
+}
