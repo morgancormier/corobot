@@ -115,16 +115,13 @@ void videomodeCallback(const corobot_msgs::videomode::ConstPtr& msg) {
 void mainloop(const char* device, int width, int height, int fps, ros::NodeHandle n, image_transport::CameraPublisher pub, diagnostic_updater::Updater& updater)
 {
 	ROS_INFO("Opening uvc_cam at %s with %dx%d, %d fps, auto-exposure: %s", device, width, height, fps, (auto_exposure)?"true":"false");
-	ros::Rate r(5);
+	ros::Rate r(fps);
 	// instantiate uvc_cam
 	uvc_cam::Cam::mode_t mode;
 	if(isjpeg)
 		mode = uvc_cam::Cam::MODE_MJPG;
 	else
 		mode = uvc_cam::Cam::MODE_RGB;
-	
-	// create an IplImage Header for the later transformation to Image
-	IplImage *imageIpl = cvCreateImageHeader(cvSize(width, height), 8, 3);
 
 	ros::Time t_prev(ros::Time::now());
 	uint64_t count = 0, skip_count = 0;
@@ -136,6 +133,13 @@ void mainloop(const char* device, int width, int height, int fps, ros::NodeHandl
 
 	bool camera_activated = false;
 	uvc_cam::Cam *cam;
+	
+	sensor_msgs::ImagePtr image(new sensor_msgs::Image);
+	image->height = height;
+	image->width = width;
+	image->step = 3 * width;
+	image->encoding = sensor_msgs::image_encodings::RGB8;
+	image->data.resize(image->step * image->height);
 
 	// run as long as ROS is running and videomode should not be changed or camera should not be stopped
 	while (n.ok() && state == PLAYING) {
@@ -174,14 +178,7 @@ void mainloop(const char* device, int width, int height, int fps, ros::NodeHandl
 	
 				// if we could grab a frame
 				if (frame) {
-				
-					sensor_msgs::ImagePtr image(new sensor_msgs::Image);
- 	
-					image->height = height;
-					image->width = width;
-					image->step = 3 * width;
-					image->encoding = sensor_msgs::image_encodings::RGB8;
- 	
+
 					ros::Time capture_time = ros::Time::now();
 
 					image->header.stamp = capture_time;
@@ -190,8 +187,6 @@ void mainloop(const char* device, int width, int height, int fps, ros::NodeHandl
 					std::string frameid = "camera";
 					image->header.frame_id = frameid;
 
-					image->data.resize(image->step * image->height);
- 
 					memcpy(&image->data[0], frame, width*height * 3);
 
 					// publish image & camera_info
@@ -218,11 +213,12 @@ void mainloop(const char* device, int width, int height, int fps, ros::NodeHandl
 				cam_ptr = NULL;
 				camera_activated = false;
 			}
-			r.sleep();
+			
 		}
 		// for the callbacks
 		updater.update(); // update the diagnostic status
 		ros::spinOnce();
+		r.sleep();
 	}
 }
 

@@ -446,7 +446,7 @@ int Cam::grab(unsigned char **frame, uint32_t &bytes_used)
       *prgb++ = sat(pyuv[i+2]+1.402f*(pyuv[i+3]-128));
       */
     }
-    memcpy(last_yuv_frame, pyuv, width * height * 2);
+  //  memcpy(last_yuv_frame, pyuv, width * height * 2);
     if (num_pixels_different > motion_threshold_count) // default: always true
       *frame = rgb_frame;
     else
