@@ -2,13 +2,11 @@
 
 Diagnostic::Diagnostic()
 {
-    lcd.open();
     errorIndex = -1;
 }
 
 Diagnostic::~Diagnostic()
 {
-    lcd.close();
 }
 
 void Diagnostic::timerCallback(const ros::TimerEvent&)

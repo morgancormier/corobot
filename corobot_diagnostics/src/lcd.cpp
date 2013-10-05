@@ -13,37 +13,25 @@ usblcd_operations *mylcd; // our lcd
 Lcd::Lcd()
 {
     /* init hid device and usblcd_operations structure */
-    mylcd = new usblcd_operations;
-    isOpened = false;
+    mylcd = new usblcd_operations();
+
+    /* init the USB LCD */
+    mylcd->init(mylcd);
+
+    /* sets backlight to on */
+    mylcd->backlight(mylcd,1);
 }
 
 Lcd::~Lcd()
 {
-    if (isOpened)
-        close();
+    /* close the USB LCD device */
+    mylcd->close(mylcd);
+
     delete mylcd;
 }
 
 void Lcd::write(string message) const
 {
-    printf("%s\n", message.c_str());
-//   mylcd->clear(mylcd); // clear the lcd screen
- //  mylcd->settext(mylcd, 0, 0, (char*) message.c_str()); // set text
-}
-
-void Lcd::open()
-{
-    /* init the USB LCD */
-  //  mylcd->init(mylcd);
-    /* sets backlight to on */
-  //  mylcd->backlight(mylcd,1);
-    
-    isOpened = true;
-}
-
-void Lcd::close()
-{
-    /* close the USB LCD device */
-  //  mylcd->close(mylcd);
-    isOpened = false;
+    mylcd->clear(mylcd); // clear the lcd screen
+    mylcd->settext(mylcd, 0, 0, (char*) message.c_str()); // set text
 }
