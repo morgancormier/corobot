@@ -46,6 +46,11 @@ CorobotAnalyzer::CorobotAnalyzer() { }
 
 bool CorobotAnalyzer::init(const string base_path, const ros::NodeHandle &n)
 { 
+
+  ros::NodeHandle nh;
+  newError_pub = nh.advertise<std_msgs::String>("new_diagnostic_error", 1000);
+  removeError_pub = nh.advertise<std_msgs::String>("remove_diagnostic_error", 1000);
+
   string nice_name;
   if (!n.getParam("path", nice_name))
   {
@@ -125,11 +130,6 @@ bool CorobotAnalyzer::init(const string base_path, const ros::NodeHandle &n)
   n.param("num_items", num_items_expected, -1); // Number of items must match this
   n.param("discard_stale", discard_stale, false);
   
-  ros::NodeHandle nh;
-  
-  newError_pub = nh.advertise<std_msgs::String>("new_diagnostic_error", 100);
-  removeError_pub = nh.advertise<std_msgs::String>("remove_diagnostic_error", 100);
-  isError = false;
   
   string my_path;
   if (base_path == "/")
@@ -187,9 +187,75 @@ bool CorobotAnalyzer::match(const string name)
   return false;
 }
 
+void CorobotAnalyzer::processLCD(boost::shared_ptr<diagnostic_msgs::DiagnosticStatus> processed)
+{
+    std::string error;
+
+    if (processed->level > 0)
+    {
+        for (unsigned int k = 0; k < processed->values.size(); ++k)
+        {
+            // Check if the process has a Recommendation key, which means that we have to display it on the LCD as it indicates an error        
+          if(processed->values[k].key == "Recommendation") 
+	      {
+	        error = processed->values[k].value;
+	      }
+        }
+    }
+    if (processed->level == 3) // The process is stalled, we need to write it on the lcd
+    {
+        // We need to send an error message to the LCD saying that this process is staled
+        error = processed->name + std::string(" is stalled");
+    }
+
+    // Remove the previous error message if the status of this process has changed
+    for (int i=0; i < processErrorsList.size(); i++)
+    {
+        if (processErrorsList.at(i).processName.compare(processed->name) == 0 && (processErrorsList.at(i).level != processed->level || error.compare(processErrorsList.at(i).error) != 0))
+        {
+            // Remove the previous message
+            std_msgs::String msg;
+            msg.data = processErrorsList.at(i).error;
+            if(removeError_pub)
+                removeError_pub.publish(msg);
+            processErrorsList.erase(processErrorsList.begin()+i);
+        }
+    }
+    int k;
+    for (int k=0; k < processErrorsList.size(); k++)
+    {
+        if (processErrorsList.at(k).processName.compare(processed->name) == 0)
+            break;
+    }
+        //Add the new error message to the error list
+    if (processed->level != 0 && k==processErrorsList.size() && error.size() != 0 && newError_pub.getNumSubscribers() > 0)
+    {
+        struct processErrors perr;
+        perr.error = error;
+        perr.level = processed->level;
+        perr.processName = processed->name;
+        processErrorsList.push_back(perr);
+
+	    std_msgs::String msg;
+        msg.data = error;
+	    if(newError_pub)
+	        newError_pub.publish(msg);
+    }
+
+}
+
+
 vector<boost::shared_ptr<diagnostic_msgs::DiagnosticStatus> > CorobotAnalyzer::report()
 {
   vector<boost::shared_ptr<diagnostic_msgs::DiagnosticStatus> > processed = GenericAnalyzerBase::report();
+
+  
+  // Process the data to display on the LCD only what is necessary
+  for (unsigned int j = 0; j < processed.size(); ++j)
+  {
+       processLCD(processed[j]);
+ 
+  }
 
   // Check and make sure our expected names haven't been removed ...
   vector<string> expected_names_missing;
@@ -226,7 +292,7 @@ vector<boost::shared_ptr<diagnostic_msgs::DiagnosticStatus> > CorobotAnalyzer::r
     if (!has_name)
       expected_names_missing.push_back(expected_[i]);
   }  
-  
+
   // Add missing names to header ...
   for (unsigned int i = 0; i < expected_names_missing.size(); ++i)
   {
@@ -239,30 +305,7 @@ vector<boost::shared_ptr<diagnostic_msgs::DiagnosticStatus> > CorobotAnalyzer::r
   {
     if (processed[j]->level != 3)
       all_stale = false;
-
-    for (unsigned int k = 0; k < processed[j]->values.size(); ++k)
-    {
-      if(processed[j]->values[k].key == "Recommendation")
-	  {
-	    error = processed[j]->values[k].value;
-	    isError = true;
-	    std_msgs::String msg;
-	    msg.data = error;
-	    if(newError_pub)
-	        newError_pub.publish(msg);
-	    
-	  }
-    }
-    if (processed[j]-> level <= 1 && isError == true)
-    {
-	    std_msgs::String msg;
-	    msg.data = error;
-	    if(removeError_pub)
-	        removeError_pub.publish(msg);
-	    isError = false;
-	}
-	    
-        
+  
   }
 
   for (unsigned int j = 0; j < processed.size(); ++j)

@@ -194,6 +194,15 @@ inline bool getParamVals(XmlRpc::XmlRpcValue param, std::vector<std::string> &ou
  *
  *
  */
+
+struct processErrors
+{
+    std::string processName;
+    std::string error;
+    int level;
+};
+
+
 class CorobotAnalyzer : public GenericAnalyzerBase
 {
 public:
@@ -234,11 +243,11 @@ private:
   std::vector<std::string> contains_;
   std::vector<std::string> name_;
   std::vector<boost::regex> regex_; /**< Regular expressions to check against diagnostics names. */
-  std::string error; //save the latest error
-  bool isError;
+  std::vector<struct processErrors> processErrorsList;
   
   ros::Publisher removeError_pub, newError_pub;
 
+  void processLCD(boost::shared_ptr<diagnostic_msgs::DiagnosticStatus> processed);
 };
 
 }
