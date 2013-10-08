@@ -13,26 +13,25 @@ usblcd_operations *mylcd; // our lcd
 Lcd::Lcd()
 {
     /* init hid device and usblcd_operations structure */
-  //  mylcd = new usblcd_operations();
+    mylcd = new usblcd_operations();
 
     /* init the USB LCD */
-  //  mylcd->init(mylcd);
+    mylcd->init(mylcd);
 
     /* sets backlight to on */
-  //  mylcd->backlight(mylcd,1);
+    mylcd->backlight(mylcd,1);
 }
 
 Lcd::~Lcd()
 {
     /* close the USB LCD device */
-  //  mylcd->close(mylcd);
+    mylcd->close(mylcd);
 
-  //  delete mylcd;
+    delete mylcd;
 }
 
 void Lcd::write(string message) const
 {
-    printf("%s\n", message.c_str());
-  //  mylcd->clear(mylcd); // clear the lcd screen
-  //  mylcd->settext(mylcd, 0, 0, (char*) message.c_str()); // set text
+    mylcd->clear(mylcd); // clear the lcd screen
+    mylcd->settext(mylcd, 0, 0, (char*) message.c_str()); // set text
 }

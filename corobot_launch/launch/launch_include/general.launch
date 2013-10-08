@@ -9,7 +9,7 @@
 
 <!--***** LCD Diagnostic *****-->
 <!-- Only useful if your robot has an LCD display -->
-<arg name="LCD" value="1"/> <!-- 1 if you have an LCD display, 0 if not -->
+<arg name="LCD" value="0"/> <!-- 1 if you have an LCD display, 0 if not -->
 
 <!--***** Kinect *****-->
 

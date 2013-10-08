@@ -32,6 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+// This Analyzer is a modifyed version of the GenericAnalyzer
+
 
 #include "corobot_diagnostics/corobot_analyzer.h"
 
@@ -188,6 +190,7 @@ bool CorobotAnalyzer::match(const string name)
 }
 
 void CorobotAnalyzer::processLCD(boost::shared_ptr<diagnostic_msgs::DiagnosticStatus> processed)
+// This function analyze one of the diagnostic messages, figures out if something needs to be displayed on the LCD and if so displays it. It also finds out if a displayed message needs to be removed
 {
     std::string error;
 
@@ -208,26 +211,29 @@ void CorobotAnalyzer::processLCD(boost::shared_ptr<diagnostic_msgs::DiagnosticSt
         error = processed->name + std::string(" is stalled");
     }
 
-    // Remove the previous error message if the status of this process has changed
+    // Check if the process has been updated if so we remove the previous error message concerning the process if it exist
     for (int i=0; i < processErrorsList.size(); i++)
     {
         if (processErrorsList.at(i).processName.compare(processed->name) == 0 && (processErrorsList.at(i).level != processed->level || error.compare(processErrorsList.at(i).error) != 0))
         {
-            // Remove the previous message
+            // Remove the previous message from the LCD list
             std_msgs::String msg;
             msg.data = processErrorsList.at(i).error;
             if(removeError_pub)
                 removeError_pub.publish(msg);
+            // We also need to remove our local list
             processErrorsList.erase(processErrorsList.begin()+i);
         }
     }
     int k;
-    for (int k=0; k < processErrorsList.size(); k++)
+    for (k=0; k < processErrorsList.size(); k++)
+    // We need to check if an error message has already been save concerning the current process
     {
         if (processErrorsList.at(k).processName.compare(processed->name) == 0)
             break;
     }
-        //Add the new error message to the error list
+
+        //If no error message exist regarding the process, and if the process has an error we need to add the new error message to the error list
     if (processed->level != 0 && k==processErrorsList.size() && error.size() != 0 && newError_pub.getNumSubscribers() > 0)
     {
         struct processErrors perr;
