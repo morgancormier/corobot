@@ -233,9 +233,9 @@ int uvcPanTilt(int dev, int pan, int tilt, int reset) {
     ctrls.count = 1;
     ctrls.controls = xctrls;
   } else {
-    xctrls[0].id = V4L2_CID_PAN_RELATIVE;
+    xctrls[0].id = V4L2_CID_PAN_ABSOLUTE;
     xctrls[0].value = pan;
-    xctrls[1].id = V4L2_CID_TILT_RELATIVE;
+    xctrls[1].id = V4L2_CID_TILT_ABSOLUTE;
     xctrls[1].value = -tilt;
 
     ctrls.count = 2;
