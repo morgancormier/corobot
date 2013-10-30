@@ -298,7 +298,7 @@ int interfacekit_simple()
 			mag_pub = n.advertise<sensor_msgs::MagneticField>("magnetic_data",100);
 		}
 
-		CPhidgetSpatial_setDataRate(spatial, 16);
+		CPhidgetSpatial_setDataRate(spatial, 4);
 	}
 
 	CPhidgetInterfaceKit_setRatiometric(ifKit, 0);
