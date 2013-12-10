@@ -94,6 +94,5 @@
   <group if="$(arg LCD)">
 	  <node pkg="corobot_diagnostics" name="diagnosticLCD" type="corobot_diagnostics" output="screen"/>
   </group>
-
 </launch>
 

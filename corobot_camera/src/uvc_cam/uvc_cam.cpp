@@ -11,7 +11,6 @@
 #include <errno.h>
 #include "uvc_cam/uvc_cam.h"
 #include <unistd.h>
-
 #ifndef INT64_C
 #define INT64_C(c) (c ## LL)
 #define UINT64_C(c) (c ## ULL)
@@ -115,6 +114,7 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
   fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   fmt.fmt.pix.width = width;
   fmt.fmt.pix.height = height;
+  printf("mode == RGB: %d, mode == YUYV: %d, mode == MJPEG:%d",mode == MODE_RGB, mode == MODE_YUYV, mode ==MODE_MJPG);
   if (mode == MODE_RGB || mode == MODE_YUYV) // we'll convert later
     fmt.fmt.pix.pixelformat = 'Y' | ('U' << 8) | ('Y' << 16) | ('V' << 24);
   else
@@ -266,7 +266,7 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
   last_yuv_frame = new unsigned char[width * height * 2];
 
 
-  init_mjpeg_decoder(width, height);
+ // init_mjpeg_decoder(width, height);
   jpegBuf = (unsigned char*) malloc(width*height*3);
 }
 
@@ -461,10 +461,11 @@ int Cam::grab(unsigned char **frame, uint32_t &bytes_used)
   }
   else // mode == MODE_JPEG
   {
-    //if (bytes_used > 100)
-
-      mjpeg2rgb((char*)mem[buf.index], bytes_used, (char*)jpegBuf, width*height);
-	*frame = jpegBuf;
+    if (bytes_used > 100)
+    {  printf("frame!\n");
+    //  mjpeg2rgb((char*)mem[buf.index], bytes_used, (char*)jpegBuf, width*height);
+	*frame = (unsigned char*)mem[buf.index];
+	}
   }
   return buf.index;
 }
@@ -503,88 +504,3 @@ void Cam::set_motion_thresholds(int lum, int count)
   motion_threshold_count = count;
 }
 
-void Cam::mjpeg2rgb(char *MJPEG, int len, char *RGB, int NumPixels)
-{
-  int got_picture;
-
-  memset(RGB, 0, avframe_rgb_size);
-
-#if LIBAVCODEC_VERSION_MAJOR > 52
-  int decoded_len;
-  AVPacket avpkt;
-  av_init_packet(&avpkt);
-  
-  avpkt.size = len;
-  avpkt.data = (unsigned char*)MJPEG;
-  decoded_len = avcodec_decode_video2(avcodec_context, avframe_camera, &got_picture, &avpkt);
-
-  if (decoded_len < 0) {
-      fprintf(stderr, "Error while decoding frame.\n");
-      return;
-  }
-#else
-  avcodec_decode_video(avcodec_context, avframe_camera, &got_picture, (uint8_t *) MJPEG, len);
-#endif
-
-  if (!got_picture) {
-    fprintf(stderr,"Webcam: expected picture but didn't get it...\n");
-    return;
-  }
-
-  int xsize = avcodec_context->width;
-  int ysize = avcodec_context->height;
-  int pic_size = avpicture_get_size(avcodec_context->pix_fmt, xsize, ysize);
-  if (pic_size != avframe_camera_size) {
-    fprintf(stderr,"outbuf size mismatch.  pic_size: %d bufsize: %d\n",pic_size,avframe_camera_size);
-    return;
-  }
-
-  video_sws = sws_getContext( xsize, ysize, avcodec_context->pix_fmt, xsize, ysize, PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
-  sws_scale(video_sws, avframe_camera->data, avframe_camera->linesize, 0, ysize, avframe_rgb->data, avframe_rgb->linesize );
-  sws_freeContext(video_sws);  
-
-  int size = avpicture_layout((AVPicture *) avframe_rgb, PIX_FMT_RGB24, xsize, ysize, (uint8_t *)RGB, avframe_rgb_size);
-  if (size != avframe_rgb_size) {
-    fprintf(stderr,"webcam: avpicture_layout error: %d\n",size);
-    return;
-  }
-}
-
-int Cam::init_mjpeg_decoder(int image_width, int image_height)
-{
-  avcodec_init();
-  avcodec_register_all();
-
-  avcodec = avcodec_find_decoder(CODEC_ID_MJPEG);
-  if (!avcodec)
-  {
-    fprintf(stderr,"Could not find MJPEG decoder\n");
-    return 0;
-  }
-
-  avcodec_context = avcodec_alloc_context();
-  avframe_camera = avcodec_alloc_frame();
-  avframe_rgb = avcodec_alloc_frame();
-
-  avpicture_alloc((AVPicture *)avframe_rgb, PIX_FMT_RGB24, image_width, image_height);
-
-  avcodec_context->codec_id = CODEC_ID_MJPEG;
-  avcodec_context->width = image_width;
-  avcodec_context->height = image_height;
-
-#if LIBAVCODEC_VERSION_MAJOR > 52
-  avcodec_context->pix_fmt = PIX_FMT_YUV422P;
-  avcodec_context->codec_type = AVMEDIA_TYPE_VIDEO;
-#endif
-
-  avframe_camera_size = avpicture_get_size(PIX_FMT_YUV422P, image_width, image_height);
-  avframe_rgb_size = avpicture_get_size(PIX_FMT_RGB24, image_width, image_height);
-
-  /* open it */
-  if (avcodec_open(avcodec_context, avcodec) < 0)
-  {
-    fprintf(stderr,"Could not open MJPEG Decoder\n");
-    return 0;
-  }
-  return 1;
-}

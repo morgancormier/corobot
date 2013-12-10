@@ -108,15 +108,15 @@ void Orientation::calculate_new_gravity(float acceleration[3])
 
 double Orientation::get_roll()
 {
-	return (roll + rollOffset);
+	return ToRad(roll + rollOffset);
 }
 
 double Orientation::get_pitch()
 {
-	return (pitch + pitchOffset);
+	return ToRad(pitch + pitchOffset);
 }
 
 double Orientation::get_yaw()
 {
-	return (yaw);
+	return ToRad(yaw);
 }
