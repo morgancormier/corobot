@@ -17,7 +17,7 @@
 <!--***** Front Camera *****-->
 
 <arg name="FrontCamera" value="1"/> <!-- 1 if you have one front camera, 0 if you don't -->
-<arg name="cameraFront_mjpeg_stream" value="1"/> <!-- 1 if you want to enable the mjpeg_stream, 0 to unable it. If enable, the camera will send mjpeg stream to the usb instead of raw rgb images, if the camera is compatible. This saves usb bandwidth, but add some computational need-->
+<arg name="cameraFront_mjpeg_stream" value="0"/> <!-- 1 if you want to enable the mjpeg_stream, 0 to unable it. If enable, the camera will send mjpeg stream to the usb instead of raw rgb images, if the camera is compatible. This saves usb bandwidth, but add some computational need-->
 <arg name="cameraFront_pantilt" value="0"/> <!-- 1 if you have the front camera is pan tilt, 0 if you don't -->
 <arg name="cameraFront_port" value="/dev/video0"/> <!-- port of the camera -->
 <arg name="cameraFront_topic" value="/PTZ/image_raw"/> <!-- Topic where the images will be send on -->
