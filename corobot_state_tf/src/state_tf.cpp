@@ -179,7 +179,7 @@ int main(int argc, char** argv){
 
 
   //Setup the subscriber and publisher of topics
-  ros::Subscriber sub = n.subscribe("/position_data", 1000, WheelCallback);
+  ros::Subscriber sub = n.subscribe("position_data", 1000, WheelCallback);
   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odometry", 50);   
   tf::TransformBroadcaster odom_broadcaster;
 

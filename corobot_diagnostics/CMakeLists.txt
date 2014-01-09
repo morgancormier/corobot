@@ -12,7 +12,8 @@ add_library(corobot_analyzer src/corobot_analyzer.cpp)
 target_link_libraries(corobot_analyzer ${catkin_LIBRARIES})
 
 add_executable(corobot_diagnostics src/lcd.cpp src/diagnostic.cpp)
-target_link_libraries(corobot_diagnostics ${catkin_LIBRARIES} picoLCD)
+#target_link_libraries(corobot_diagnostics ${catkin_LIBRARIES} picoLCD)
+target_link_libraries(corobot_diagnostics ${catkin_LIBRARIES})
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

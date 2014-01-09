@@ -525,13 +525,13 @@ if __name__ == "__main__":
     setupMoveService()
 
     try:
-        motorControl.setVelocity(leftWheels, 0);
+        motorControl.setVelocity(leftWheels, 0)
         if phidget1065 != True:
-            motorControl.setVelocity(rightWheels, 0);
+            motorControl.setVelocity(rightWheels, 0)
         
         motorControl.closePhidget()
         if phidget1065 == True:
-            motorControlRight.setVelocity(rightWheels, 0);
+            motorControlRight.setVelocity(rightWheels, 0)
             motorControlRight.closePhidget()
         else:
             encoders.closePhidget()
