@@ -26,7 +26,7 @@ bool odometry_activated = true;
 double previous_x_position_at_publish_time = 0;
 double previous_y_position_at_publish_time = 0;
 double previous_orientation_at_publish_time = 0;
-ros::Time previous_time_encoder_at_publish_time = ros::Time::now();
+ros::Time previous_time_encoder_at_publish_time;
 
 void WheelCallback(const corobot_msgs::PosMsg::ConstPtr& pos)
 /**
@@ -168,7 +168,8 @@ int main(int argc, char** argv){
   ros::init(argc, argv, "corobot_state_tf");
   ros::NodeHandle n;
   ros::NodeHandle nh("~");
-  
+  previous_time_encoder_at_publish_time = ros::Time::now();
+ 
   nh.param("FourWheelDrive", is4WheelDrive, false);
   nh.param("base_width", lengthBetweenTwoWheels, 0.25); // The length between the left and right wheel
   nh.param("ticks_meter", ticks_meter, 9400); // the number of the encoder ticks per meter
