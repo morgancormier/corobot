@@ -12,8 +12,6 @@ ros::Time current_time_encoder, last_time_encoder; //save the time for the curre
 double DistancePerCount; //to calculate - distance in meter for one count of the encoders.The Phidget C API gives the number of encoder ticks *4.
 double lengthBetweenTwoWheels; //distance in meters between the left and right wheels, taken in the middle.
  
-
-
 double x, y, th; // the position of the robot in the plan, and the orientation
 double dx = 0, dy = 0, dth = 0; // the difference of position and orientation between the two last encoder measurements, in the robot's frame
 double dela_time; //time difference between the two last encoder measurement received
@@ -23,12 +21,20 @@ bool is4WheelDrive;
 bool publish_odom_tf; //if true publish the transform from odom to base_footprint
 bool odometry_activated = true;
 
+
+// Variables used to calculate the velocity. The velocity is calculated at time of publishing, every 20ms and position and timestamp need to be saved
+double previous_x_position_at_publish_time = 0;
+double previous_y_position_at_publish_time = 0;
+double previous_orientation_at_publish_time = 0;
+ros::Time previous_time_encoder_at_publish_time = ros::Time::now();
+
 void WheelCallback(const corobot_msgs::PosMsg::ConstPtr& pos)
 /**
  * Calculate the velocity and the odometry
  * Called everytime a new encoder position has been received.
  */
 {
+  last_time_encoder = current_time_encoder;
   current_time_encoder = pos->header.stamp; // the time corresponding to the encoder measurement
   double distance_left = 0.0,distance_right = 0.0; // the distance made by the left and the right wheel
 
@@ -58,7 +64,6 @@ void WheelCallback(const corobot_msgs::PosMsg::ConstPtr& pos)
 	  //save the encoder position and time to use it when the next encoder measurement is received.
 	  _PreviousLeftEncoderCounts = pos->px;
 	  _PreviousRightEncoderCounts = pos->py;
-	  last_time_encoder = current_time_encoder;
     }
 }
 
@@ -126,17 +131,23 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
 
 	//set the velocity
 	odom.child_frame_id = "base_link";
-	if (dela_time!=0)
+	if (firstTime == false && current_time_encoder != previous_time_encoder_at_publish_time)
 	{
-		odom.twist.twist.linear.x = dx/dela_time;
-		odom.twist.twist.linear.y = dy/dela_time;
-		odom.twist.twist.angular.z = dth/dela_time;
+		odom.twist.twist.linear.x = (x - previous_x_position_at_publish_time)/((current_time_encoder - previous_time_encoder_at_publish_time).toSec());
+		odom.twist.twist.linear.y = (y - previous_y_position_at_publish_time)/((current_time_encoder - previous_time_encoder_at_publish_time).toSec());
+		odom.twist.twist.angular.z = (th - previous_orientation_at_publish_time)/((current_time_encoder - previous_time_encoder_at_publish_time).toSec());
+		
+		previous_x_position_at_publish_time = x;
+		previous_y_position_at_publish_time = y;
+		previous_orientation_at_publish_time = th;
+		previous_time_encoder_at_publish_time = current_time_encoder;
 	}
 	else
 	{
 		odom.twist.twist.linear.x = 0;
 		odom.twist.twist.linear.y = 0;
 		odom.twist.twist.angular.z = 0;
+		previous_time_encoder_at_publish_time = ros::Time::now();
 	}
 	//These covariance values are "random". Some better values could be found after experiments and calculations
 	odom.twist.covariance[0] = 0.01;
@@ -176,7 +187,6 @@ int main(int argc, char** argv){
   {
     lengthBetweenTwoWheels *= 1.5; // This is to compensate the fact that we don't have a differential drive but a skid system
   }
-
 
   //Setup the subscriber and publisher of topics
   ros::Subscriber sub = n.subscribe("position_data", 1000, WheelCallback);
