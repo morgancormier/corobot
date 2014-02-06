@@ -213,7 +213,7 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
 } //End publish_odometry
 
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
   int ticks_meter; 
 
   ros::init(argc, argv, "corobot_state_tf");
@@ -221,9 +221,17 @@ int main(int argc, char** argv){
   ros::NodeHandle nh("~");
   previous_time_encoder_at_publish_time = ros::Time::now(); 
  
+
+  // True if we have four wheel robot
   nh.param("FourWheelDrive", is4WheelDrive, false);
-  nh.param("base_width", lengthBetweenTwoWheels, 0.254); // The length between the left and right wheel
-  nh.param("ticks_meter", ticks_meter, 9400); // the number of the encoder ticks per meter
+  
+  // The length between the left and right wheel
+  nh.param("base_width", lengthBetweenTwoWheels, 0.254); 
+
+  // Number of encoder ticks per metet
+  nh.param("ticks_meter", ticks_meter, 9400); 
+
+  // True if we are publishing odometry and tf
   nh.param("publish_odom_tf", publish_odom_tf, true);
 
   dynamic_reconfigure::Server<corobot_state_tf::corobot_state_tfConfig> server;
@@ -233,11 +241,12 @@ int main(int argc, char** argv){
   server.setCallback(f);
 
   //Set up the distance per encoder ticks and the length between two wheels variable
-  
   DistancePerCount = 1.0/(float)ticks_meter;
-  if(is4WheelDrive)
-  {
-    lengthBetweenTwoWheels *= 1.5; // This is to compensate the fact that we don't have a differential drive but a skid system
+
+  // If 4 wheels, change the distance between the wheels
+  // This is to compensate the fact that we don't have a differential drive but a skid system
+  if(is4WheelDrive) {
+    lengthBetweenTwoWheels *= 1.5;   
   }
 
   //Setup the subscriber and publisher of topics
@@ -245,20 +254,23 @@ int main(int argc, char** argv){
   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odometry", 50);   
   tf::TransformBroadcaster odom_broadcaster;
 
+  // Rate at which to check for encoder updates when odometry is activated
+  ros::Rate r(10); 
 
-  ros::Rate r(10); //rate at which the ros spin function is called when the odometry is activated
-  ros::Rate r_deactivated(2); //rate at which the ros spin function is called when the odometry is innactivated by dynamic reconfigure
+  // Rate at which to check for encoder updates when odometry is deactivated by dynamic_reconfigure
+  ros::Rate r_deactivated(2); 
 
   tf::TransformBroadcaster broadcaster;
 
-  while(n.ok()){
-	ros::spinOnce();
-	if (odometry_activated)
-	{
-		publish_odometry(odom_pub, odom_broadcaster, broadcaster);
-	    	r.sleep();
+  while(n.ok()) {
+    ros::spinOnce();
+    if (odometry_activated) {
+      publish_odometry(odom_pub, odom_broadcaster, broadcaster);
+      r.sleep();
     }
-	else
-	    r_deactivated.sleep();
-  }
-}
+    else
+        r_deactivated.sleep();
+  } //end while
+
+  return 0;
+} 
