@@ -212,16 +212,19 @@ int SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr, CPhidgetSpa
 
         // Save info into the message and publish
 		imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(orientation_calculation.get_roll(),orientation_calculation.get_pitch(), orientation_calculation.get_yaw());
-		imu.angular_velocity.x = data[i]->angularRate[0];
-		imu.angular_velocity.y = data[i]->angularRate[1];
-		imu.angular_velocity.z = data[i]->angularRate[2];
-		imu.linear_acceleration.x = data[i]->acceleration[0];
-		imu.linear_acceleration.y = data[i]->acceleration[1];
-		imu.linear_acceleration.z = data[i]->acceleration[2];
-
-		mag.magnetic_field.x = data[i]->magneticField[0];
-		mag.magnetic_field.y = data[i]->magneticField[1];
-		mag.magnetic_field.z = data[i]->magneticField[2];
+		
+		// Set up the angular velocity field. the data->angularRate is in deg/sec while we need the unit to be in rad/s
+		imu.angular_velocity.x = data[i]->angularRate[0] * (3.14 / 180);
+		imu.angular_velocity.y = data[i]->angularRate[1] * (3.14 / 180);
+		imu.angular_velocity.z = data[i]->angularRate[2] * (3.14 / 180);
+		// Set up the acceleration field. The data->acceleration is in g while we need the unit to be in m/s^2
+		imu.linear_acceleration.x = data[i]->acceleration[0] * 9.81;
+		imu.linear_acceleration.y = data[i]->acceleration[1] * 9.81;
+		imu.linear_acceleration.z = data[i]->acceleration[2] * 9.81;
+    // Set up the magnetic_field field. The data->magneticField is in Gauss while we need the unit to be in Tesla.
+		mag.magnetic_field.x = data[i]->magneticField[0] * 0.0001;
+		mag.magnetic_field.y = data[i]->magneticField[1] * 0.0001;
+		mag.magnetic_field.z = data[i]->magneticField[2] * 0.0001;
 
 		if(imu_pub)
 			imu_pub.publish(imu);
