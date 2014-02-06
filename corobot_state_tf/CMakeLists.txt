@@ -12,7 +12,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} cfg/cpp)
 
-add_executable(corobot_state_tf src/state_tf.cpp)
+add_executable(corobot_state_tf src/state_tf.cpp src/utility.cpp)
 add_dependencies(corobot_state_tf corobot_state_tf_gencfg)
 target_link_libraries(corobot_state_tf ${catkin_LIBRARIES}) 
 
