@@ -10,13 +10,6 @@
 // Utility object for geometry functions
 Utility u;
 
-// Save the previous left,right encoder values
-long _PreviousLeftEncoderCounts = 0; 
-long _PreviousRightEncoderCounts = 0;
-
-// Time for the current and the previous encoder time
-ros::Time current_time_encoder, last_time_encoder; 
-
 // To calculate - distance in meter for one count of the encoders.The Phidget C API gives the number of encoder ticks *4.
 double DistancePerCount; 
 
@@ -25,12 +18,6 @@ double lengthBetweenTwoWheels;
 
 // X, y, and orientation of the robot
 double x, y, th; 
-
-// The change in position and orientation between encoder measurements relative to the robot
-double dx = 0, dy = 0, dth = 0; 
-
-// Time difference between current and previous encoder measurements
-double delta_time; 
 
 // True if we are waiting for first encoder measurement
 bool firstTime = true; 
@@ -48,58 +35,66 @@ bool odometry_activated = true;
 // Variables used to calculate the velocity. 
 // The velocity is calculated at time of publishing, 
 // every 20ms and position and timestamp need to be saved
-double previous_x_position_at_publish_time = 0;
-double previous_y_position_at_publish_time = 0;
-double previous_orientation_at_publish_time = 0;
-ros::Time previous_time_encoder_at_publish_time;
+double previous_x = 0;
+double previous_y = 0;
+double previous_th = 0;
 
 
-/**
- * Calculate the velocity and the odometry
- * Called everytime a new encoder position has been received.
- */
-void WheelCallback(const corobot_msgs::PosMsg::ConstPtr& pos) {
+// Want to only update x,y,th after a certain amount of PosMsgs are received
+corobot_msgs::PosMsg previous;
+corobot_msgs::PosMsg current;
+
+
+
+/** This function sets the x, y, th, dx, and dth values */
+void setValues() {
+  
   // Set previous time encoder data was measured
-  last_time_encoder = current_time_encoder;
+  ros::Time last_time_encoder = previous.header.stamp;
   
   // Time corresponding to the encoder measurement
-  current_time_encoder = pos->header.stamp; 
+  ros::Time current_time_encoder = current.header.stamp; 
 
   // Get time difference
-  delta_time = (current_time_encoder - last_time_encoder).toSec();
-  if (delta_time>0.001) {
-	  if(firstTime == false) { 
-
-      // Distance made by the left wheel
-      double distance_left = ((double)(pos->px - _PreviousLeftEncoderCounts) * DistancePerCount);     	    
-
-      // Distance made by the right wheel
-      double distance_right = ((double)(pos->py - _PreviousRightEncoderCounts) * DistancePerCount); 
+  double delta_time = (current_time_encoder - last_time_encoder).toSec();
   
-      // Get the overall distance traveled
-      dx = (distance_left + distance_right)/2.0;
-        
-      // Length of the arc formed by wheel turning
-      double arc_length = (distance_right - distance_left);
+  // Check for if initialization is needed
+  if(firstTime == false) { 
 
-      // Central angle formed by arc is proportionate to arc length
-      // length / circumference = theta / 2*PI
-      dth = (2*M_PI*arc_length)/(M_PI*lengthBetweenTwoWheels); 
+    // Distance made by the left wheel
+    double distance_left = ((double)(current.px - previous.px) * DistancePerCount);     	    
+    // Distance made by the right wheel
+    double distance_right = ((double)(current.py - previous.py) * DistancePerCount); 
 
-      // Displace th by dth
-      th = u.displaceAngle(th, dth);
+    // Get the overall distance traveled
+    double dx = (distance_left + distance_right)/2.0;
+      
+    // Length of the arc formed by wheel turning
+    double arc_length = (distance_right - distance_left);
 
-      // Set the new x,y values
-      x += (dx * cos(th));
-      y += (dx * sin(th));
-	  } // end if not first time
-    // Else, set firstTime=false
-	  else firstTime = false;
+    // Central angle formed by arc is proportionate to arc length
+    // length / circumference = theta / 2*PI, which is 2PI*l/2PI*r = l/r
+    double dth = (arc_length)/(lengthBetweenTwoWheels); 
 
-	  //Save the encoder position and time to use it when the next encoder measurement is received.
-    _PreviousLeftEncoderCounts = pos->px;
-    _PreviousRightEncoderCounts = pos->py;
-  } //end if 
+    // Displace th by dth
+    th = u.displaceAngle(th, dth);
+
+    // Set the new x,y values
+    x += (dx * cos(th));
+    y += (dx * sin(th));
+  } // end if not first time
+  // Else, set firstTime=false
+  else {
+    firstTime = false;
+  } // end else
+} // End setValues
+
+
+/** This function sets the current position message */
+void WheelCallback(const corobot_msgs::PosMsg& pos) {
+
+  current = pos;
+
 } // End WheelCallback
 
 
@@ -112,6 +107,9 @@ void dynamic_reconfigureCallback(corobot_state_tf::corobot_state_tfConfig &confi
 
 /** Publish the odometry and tf messages */
 void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_broadcaster, tf::TransformBroadcaster& broadcaster) {
+
+  // Set values needed to calculate odometry
+  setValues();
 
 	// Publish the transform between the base_link and the laser range finder
 	broadcaster.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.15, 0, 0)),ros::Time::now(),"base_link", "laser"));
@@ -132,7 +130,7 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
 	odom_trans.transform.rotation = odom_quat;
 
 	geometry_msgs::TransformStamped odom_trans2;
-	odom_trans2.header.stamp = current_time_encoder;
+	odom_trans2.header.stamp = current.header.stamp;
 	odom_trans2.header.frame_id = "base_footprint";
 	odom_trans2.child_frame_id = "base_link";
 
@@ -149,7 +147,7 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
 
 	// Next, publish the odometry message 
 	nav_msgs::Odometry odom;
-	odom.header.stamp = current_time_encoder;
+	odom.header.stamp = current.header.stamp;
 	odom.header.frame_id = "odom";
 
 	// Set the position
@@ -172,44 +170,47 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
   odom.child_frame_id = "base_link";
 
   // If robot is moving
-	if (firstTime == false && current_time_encoder != previous_time_encoder_at_publish_time) {
-    double v_th = (u.findDistanceBetweenAngles(th, previous_orientation_at_publish_time)) / ((current_time_encoder - previous_time_encoder_at_publish_time).toSec());
+  if (firstTime == false && current.header.stamp != previous.header.stamp) {
+  
   
     // Velocity values are current - previous / time_difference
     // X
-		odom.twist.twist.linear.x = (x - previous_x_position_at_publish_time)/((current_time_encoder - previous_time_encoder_at_publish_time).toSec());
+    odom.twist.twist.linear.x = (x - previous_x)/((current.header.stamp - previous.header.stamp).toSec());
 
     // Y
-		odom.twist.twist.linear.y = (y - previous_y_position_at_publish_time)/((current_time_encoder - previous_time_encoder_at_publish_time).toSec());
+    odom.twist.twist.linear.y = (y - previous_y)/((current.header.stamp - previous.header.stamp).toSec());
 
     // Theta
-		odom.twist.twist.angular.z = (u.findDistanceBetweenAngles(th, previous_orientation_at_publish_time)) / ((current_time_encoder - previous_time_encoder_at_publish_time).toSec());
+    odom.twist.twist.angular.z = (u.findDistanceBetweenAngles(th, previous_th)) / ((current.header.stamp - previous.header.stamp).toSec());
 
     // Set the previous values
-		previous_x_position_at_publish_time = x;
-		previous_y_position_at_publish_time = y;
-		previous_orientation_at_publish_time = th;
-		previous_time_encoder_at_publish_time = current_time_encoder;
-	}
+    previous_x = x;
+    previous_y = y;
+    previous_th = th;
+    previous.header.stamp = current.header.stamp;
+  }
 
   // Else, set velocities to zero
-	else {
-		odom.twist.twist.linear.x = 0;
-		odom.twist.twist.linear.y = 0;
-		odom.twist.twist.angular.z = 0;
-		previous_time_encoder_at_publish_time = ros::Time::now();
-	}
+  else {
+    odom.twist.twist.linear.x = 0;
+    odom.twist.twist.linear.y = 0;
+    odom.twist.twist.angular.z = 0;
+    previous.header.stamp = ros::Time::now();
+  }
 	
-  //These covariance values are "random". Some better values could be found after experiments and calculations
-	odom.twist.covariance[0] = 0.01;
-	odom.twist.covariance[7] = 0.01;
-	odom.twist.covariance[14] = 10000;
-	odom.twist.covariance[21] = 10000;
+  // These covariance values are "random". Some better values could be found after experiments and calculations
+  odom.twist.covariance[0] = 0.01;
+  odom.twist.covariance[7] = 0.01;
+  odom.twist.covariance[14] = 10000;
+  odom.twist.covariance[21] = 10000;
 	odom.twist.covariance[28] = 10000;
 	odom.twist.covariance[35] = 0.1;
 
-	//publish the message
+	// Publish the message
 	odom_pub.publish(odom);
+
+  // Set previous
+  previous = current;
 } //End publish_odometry
 
 
@@ -219,7 +220,6 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "corobot_state_tf");
   ros::NodeHandle n;
   ros::NodeHandle nh("~");
-  previous_time_encoder_at_publish_time = ros::Time::now(); 
  
 
   // True if we have four wheel robot
