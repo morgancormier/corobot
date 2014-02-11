@@ -50,7 +50,8 @@
 #include <opencv/cvwimage.h>
 #include <opencv/highgui.h>
 
-#if not (ROS_VERSION_MINIMUM(1, 9, 0)) //If the ROS version is bellow Groovy, as cv_bridge is not present in groovy anymore
+//If the ROS version is bellow Groovy, as cv_bridge is not present in groovy anymore
+#if not (ROS_VERSION_MINIMUM(1, 9, 0)) 
 	#include <cv_bridge/CvBridge.h>
 #endif
 
@@ -68,10 +69,19 @@ char state = STOP;
 
 // variables to change width and height
 int new_width, new_height, new_fps;
+
+// True if the exposure is automatically set
 bool auto_exposure = true;
+
+//  True if the camera is activated
 bool camera_activated = true;
-int camera_state = 0; // This is used for the diagnostic function to know what to report to the user
+
+// This is used for the diagnostic function to know what to report to the user
+int camera_state = 0;
+
+// True if we get jpeg images directly from the camera. 
 bool isjpeg = false;
+
 // pointer to cam
 uvc_cam::Cam * cam_ptr;
 
@@ -190,6 +200,7 @@ void mainloop(const char* device, int width, int height, int fps, ros::NodeHandl
 	bool camera_activated = false;
 	uvc_cam::Cam *cam;
 	
+	// Create the image variable, used only if the mode is not jpeg
 	sensor_msgs::ImagePtr image(new sensor_msgs::Image);
 	image->height = height;
 	image->width = width;
@@ -279,7 +290,7 @@ void mainloop(const char* device, int width, int height, int fps, ros::NodeHandl
 				}
 				
 			}		
-		else
+		else // no subscribers
 		{
 			camera_state = 2;
 			if (camera_activated) // the camera is activated but no one is subscribed to the topic, so we deactivate the camera

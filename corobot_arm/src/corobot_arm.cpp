@@ -7,6 +7,15 @@
 #include "corobot_msgs/ServoPosition.h"
 #include "corobot_msgs/ServoType.h"
 
+
+/**
+ * This node is used to control an arm on your corobot robot.
+ * It subscribes to a topic armPosition of type corobot_msgs/MoveArm.
+ * Then, it sends the necessary messages to the necessary node that interfaces with the hardware. 
+ * This was necessary as many arms are available for the corobot,
+ * and the nodes interfacing the different hardware are made by different people and have different interfaces
+ */
+
 //Enumeration to identifies the position of a servo
 typedef enum
 {
@@ -35,19 +44,29 @@ typedef struct
 	int max_angle; 
 } servo;
 
+// Publishing topics to control the servos
+ros::Publisher position_pub, type_pub; 
 
-ros::Publisher position_pub, type_pub;
-double centerOffset = 0.0; //servo offset, in degrees
-servo * servos = NULL; // list of connected servos
-int number_servo = 0; //number of connected servos
-hardware_controller controller; //which servo controller id used?
-ros::Publisher * arbotix_publisher = NULL; //table of publishers, as we need one publisher per servo for the arbotix controller.
+//servo offset, in degrees
+double centerOffset = 0.0; 
+
+// list of connected servos
+servo * servos = NULL; 
+
+//number of connected servos
+int number_servo = 0; 
+
+//which servo controller id used?
+hardware_controller controller; 
+
+//table of publishers, as we need one publisher per servo for the arbotix controller.
+ros::Publisher * arbotix_publisher = NULL; 
 
 
-void setServoPosition(const corobot_msgs::MoveArm &msg)
 /**
  * @brief Topic to move the arm of the Corobot
  */ 
+void setServoPosition(const corobot_msgs::MoveArm &msg)
 {
 	corobot_msgs::ServoPosition msg_sending;
 	
@@ -84,7 +103,8 @@ void setServoPosition(const corobot_msgs::MoveArm &msg)
 			if(controller == arbotix)
 			{
 				std_msgs::Float64 msg_arbotix;
-				msg_arbotix.data = (msg_sending.position / 180) * M_PI; // the arbotix controller code take angles in radian and not degrees
+				// the arbotix controller code take angles in radian and not degrees
+				msg_arbotix.data = (msg_sending.position / 180) * M_PI; 
 				arbotix_publisher[i].publish(msg_arbotix);
 			}
 			else
@@ -93,11 +113,10 @@ void setServoPosition(const corobot_msgs::MoveArm &msg)
 	}
 }
 
-
-void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 /**
  * @brief initialise the list of servos (variable servos) and the number of servos connected. It reads this from the yaml file. 
  */ 
+void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 {
 	if(dynamixels.hasMember("base"))
 	{
@@ -106,7 +125,8 @@ void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 		servos[number_servo].min_angle = (int) dynamixels["base"]["min_angle"];
 		servos[number_servo].max_angle = (int) dynamixels["base"]["max_angle"];
 
-		if(controller == arbotix) //the arbotix controller driver needs one topic per servo motor
+    //the arbotix controller driver needs one topic per servo motor
+		if(controller == arbotix) 
 			arbotix_publisher[number_servo] = n.advertise<std_msgs::Float64>("/base/command", 100);
 
 		number_servo++;
@@ -118,6 +138,7 @@ void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 		servos[number_servo].min_angle = (int) dynamixels["shoulder"]["min_angle"];
 		servos[number_servo].max_angle = (int) dynamixels["shoulder"]["max_angle"];
 
+    //the arbotix controller driver needs one topic per servo motor
 		if(controller == arbotix)
 			arbotix_publisher[number_servo] = n.advertise<std_msgs::Float64>("/shoulder/command", 100);
 
@@ -130,6 +151,7 @@ void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 		servos[number_servo].min_angle = (int) dynamixels["shoulder2"]["min_angle"];
 		servos[number_servo].max_angle = (int) dynamixels["shoulder2"]["max_angle"];
 
+    //the arbotix controller driver needs one topic per servo motor
 		if(controller == arbotix)
 			arbotix_publisher[number_servo] = n.advertise<std_msgs::Float64>("/shoulder2/command", 100);
 
@@ -142,6 +164,7 @@ void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 		servos[number_servo].min_angle = (int) dynamixels["elbow"]["min_angle"];
 		servos[number_servo].max_angle = (int) dynamixels["elbow"]["max_angle"];
 
+    //the arbotix controller driver needs one topic per servo motor
 		if(controller == arbotix)
 			arbotix_publisher[number_servo] = n.advertise<std_msgs::Float64>("/elbow/command", 100);
 	
@@ -154,6 +177,7 @@ void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 		servos[number_servo].min_angle = (int) dynamixels["elbow2"]["min_angle"];
 		servos[number_servo].max_angle = (int) dynamixels["elbow2"]["max_angle"];
 
+    //the arbotix controller driver needs one topic per servo motor
 		if(controller == arbotix)
 			arbotix_publisher[number_servo] = n.advertise<std_msgs::Float64>("/elbow2/command", 100);
 
@@ -166,6 +190,7 @@ void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 		servos[number_servo].min_angle = (int) dynamixels["wrist_flex"]["min_angle"];
 		servos[number_servo].max_angle = (int) dynamixels["wrist_flex"]["max_angle"];
 
+    //the arbotix controller driver needs one topic per servo motor
 		if(controller == arbotix)
 			arbotix_publisher[number_servo] = n.advertise<std_msgs::Float64>("/wrist_flex/command", 100);
 
@@ -178,6 +203,7 @@ void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 		servos[number_servo].min_angle = (int) dynamixels["wrist_rotation"]["min_angle"];
 		servos[number_servo].max_angle = (int) dynamixels["wrist_rotation"]["max_angle"];
 
+    //the arbotix controller driver needs one topic per servo motor
 		if(controller == arbotix)
 			arbotix_publisher[number_servo] = n.advertise<std_msgs::Float64>("/wrist_rotation/command", 100);
 
@@ -190,6 +216,7 @@ void init_servos_db(XmlRpc::XmlRpcValue dynamixels, ros::NodeHandle n)
 		servos[number_servo].min_angle = -180;
 		servos[number_servo].max_angle = 180;
 
+    //the arbotix controller driver needs one topic per servo motor
 		if(controller == arbotix)
 			arbotix_publisher[number_servo] = n.advertise<std_msgs::Float64>("/gripper/command", 100);
 
@@ -203,9 +230,8 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	ros::NodeHandle n_private("~");
 
-
-	//Subscribe to topics
-	ros::Subscriber armPos= n.subscribe("armPosition", 100, setServoPosition); //Command received by corobot_teleop or any other controlling node
+	//Command received by corobot_teleop or any other controlling node
+	ros::Subscriber armPos= n.subscribe("armPosition", 100, setServoPosition); 
 
 
 	//Set up an offset, in case the servo is not at its default position when it is supposed to  
@@ -222,7 +248,8 @@ int main(int argc, char **argv)
 	if (strcmp(static_cast<std::string>(controller_type).c_str(), "arbotix") == 0)
 	{
 			controller = arbotix;
-			arbotix_publisher = new ros::Publisher[dynamixels.size()]; //set the size of the table
+			//set the size of the table
+			arbotix_publisher = new ros::Publisher[dynamixels.size()];
 	}
 	else if (strcmp(static_cast<std::string>(controller_type).c_str(), "ssc32") == 0)
 	{
@@ -240,14 +267,18 @@ int main(int argc, char **argv)
 	//Declare the necessary topics
 	if(controller == phidget) 
 	{
-		position_pub = n.advertise<corobot_msgs::ServoPosition>("setPositionServo", 100); //Set the position of the servo. Use for phidgetServo and corobot_ssc32
-		type_pub = n.advertise<corobot_msgs::ServoType>("phidgetServo_setType", 100); //Set the type of servos. PhidgetServo needs it.
+	  //Set the position of the servo. Use for phidgetServo and corobot_ssc32
+		position_pub = n.advertise<corobot_msgs::ServoPosition>("setPositionServo", 100); 
+		
+		//Set the type of servos. PhidgetServo needs it.
+		type_pub = n.advertise<corobot_msgs::ServoType>("phidgetServo_setType", 100); 
 
 		corobot_msgs::ServoType typeMsg;
 	}
 	else if (controller == ssc32)
 	{
-		position_pub = n.advertise<corobot_msgs::ServoPosition>("setPositionServo", 100); //Set the position of the servo. Use for phidgetServo and corobot_ssc32
+	  //Set the position of the servo. Use for phidgetServo and corobot_ssc32
+		position_pub = n.advertise<corobot_msgs::ServoPosition>("setPositionServo", 100); 
 	}
 
 
@@ -257,10 +288,12 @@ int main(int argc, char **argv)
 		corobot_msgs::ServoPosition msg;
 
 		ros::spinOnce();
-		ros::Rate loop_rate(0.5);  //We wait 2s to make sure that the node PhidgetServo has already subscribed to the topic
+		//We wait 2s to make sure that the node PhidgetServo has already subscribed to the topic
+		ros::Rate loop_rate(0.5);  
 		loop_rate.sleep();
 
-		for (int i=0; i<number_servo; i++) //we initialize the servos
+    //we initialize the servos
+		for (int i=0; i<number_servo; i++) 
 		{
 			msg.index = servos[i].id;
 			if(servos[i].type == base_rotation)

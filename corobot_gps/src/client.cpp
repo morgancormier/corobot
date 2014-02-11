@@ -7,29 +7,38 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
 
+/** 
+ * Node interfacing with a usb gps sensor
+ */
+
 using namespace corobot_msgs;
 using namespace sensor_msgs;
 
+// Class interfacing with the gps sensor
 class GPSDClient {
   public:
+  
     GPSDClient() : privnode("~"), use_gps_time(true) {
 #if GPSD_API_MAJOR_VERSION < 5
     gps = new gpsmm();
     gps_state = 0;
 #endif
-}
+    }
 
     ~GPSDClient()
     {
-	delete gps;
+	    delete gps;
     }
 
+    // Start the gps sensor
     bool start() {
+      // Advertise the topics
       gps_fix_pub = node.advertise<GPSFix>("extended_fix", 1);
       navsat_fix_pub = node.advertise<NavSatFix>("fix", 1);
 
       privnode.getParam("use_gps_time", use_gps_time);
 
+      // Set up where the gps data are read from
       std::string host = "localhost";
       int port = 2947;
       privnode.getParam("host", host);
@@ -38,32 +47,33 @@ class GPSDClient {
       char port_s[12];
       snprintf(port_s, 12, "%d", port);
 
+      // Start gpsmm 
       gps_data_t *resp;
 #if GPSD_API_MAJOR_VERSION >= 5
-    gps = new gpsmm(host.c_str(), port_s);
+      gps = new gpsmm(host.c_str(), port_s);
 #elif GPSD_API_MAJOR_VERSION < 5
       resp = gps->open(host.c_str(), port_s);
       if (resp == NULL) {
         ROS_ERROR("Failed to open GPSd");
-	gps_state = 1;
+	      gps_state = 1;
         return false;
       }
 #endif
 
+      // Start the stream that will give us gps values
 #if GPSD_API_MAJOR_VERSION >= 5
       resp = gps->stream(WATCH_ENABLE);
       if (resp == NULL) {
         ROS_ERROR("Failed to intialize the gps");
-	gps_state = 1;
-	return false;
+	    gps_state = 1;
+	    return false;
       }
-
 #elif GPSD_API_MAJOR_VERSION == 4
       resp = gps->stream(WATCH_ENABLE);
       if (resp == NULL) {
         ROS_ERROR("Failed to intialize the gps");
-	gps_state = 1;
-	return false;
+	    gps_state = 1;
+	    return false;
       }
 #elif GPSD_API_MAJOR_VERSION == 3
       gps->query("w\n");
@@ -77,6 +87,7 @@ class GPSDClient {
       return true;
     }
 
+    // Read the gps data and process them
     void step() {
 
       gps_data_t *p;
@@ -88,40 +99,42 @@ class GPSDClient {
       process_data(p);
     }
 
+    // Stop the gps
     void stop() {
       // gpsmm doesn't have a close method? OK ...
     }
 
-    void gps_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
     /**
      * Function that will report the status of the hardware to the diagnostic topic
      */
+    void gps_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
     {
-	if (gps_state == 0)  
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "The gps is working");
-	else if (gps_state == 1)
-	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Can't intialize");
-		stat.addf("Recommendation", "The gps could not be initialized. Please make sure the gps is connected to the motherboard and is configured. You can follow points 1.3 and after in the following tutorial for the configuration: http://ros.org/wiki/gpsd_client/Tutorials/Getting started with gpsd_client");
-	}
-	else if (gps_state == 2)
-	{
-		stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "wrong lib gpsd version");
-		stat.addf("Recommendation", "Please make sure that gpsd is installed and that you have at least the api major version 3 or after installed.");
-	}
+	    if (gps_state == 0)  
+		    stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "The gps is working");
+	    else if (gps_state == 1)
+	    {
+		    stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "Can't intialize");
+		    stat.addf("Recommendation", "The gps could not be initialized. Please make sure the gps is connected to the motherboard and is configured. You can follow points 1.3 and after in the following tutorial for the configuration: http://ros.org/wiki/gpsd_client/Tutorials/Getting started with gpsd_client");
+	    }
+	    else if (gps_state == 2)
+	    {
+		    stat.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR, "wrong lib gpsd version");
+		    stat.addf("Recommendation", "Please make sure that gpsd is installed and that you have at least the api major version 3 or after installed.");
+	    }
     }
 
   private:
     ros::NodeHandle node;
     ros::NodeHandle privnode;
-    ros::Publisher gps_fix_pub;
-    ros::Publisher navsat_fix_pub;
+    // ROS publisher
+    ros::Publisher gps_fix_pub, navsat_fix_pub;
     gpsmm *gps;
     int gps_state;
 
     bool use_gps_time;
 
-    void process_data(struct gps_data_t* p) {
+    void process_data(struct gps_data_t* p) 
+    {
       if (p == NULL)
         return;
 
@@ -140,6 +153,7 @@ class GPSDClient {
 #define SATS_VISIBLE p->satellites
 #endif
 
+    // process the data received from the gps
     void process_data_gps(struct gps_data_t* p) {
       ros::Time time = ros::Time::now();
 
@@ -171,12 +185,16 @@ class GPSDClient {
       }
 
       if ((p->status & STATUS_FIX) && !isnan(p->fix.epx)) {
-        status.status = 0; // FIXME: gpsmm puts its constants in the global
-                           // namespace, so `GPSStatus::STATUS_FIX' is illegal.
+        // FIXME: gpsmm puts its constants in the global namespace, so `GPSStatus::STATUS_FIX' is illegal.
+        status.status = 0; 
 
         if (p->status & STATUS_DGPS_FIX)
-          status.status |= 18; // same here
+        {
+          // same here
+          status.status |= 18; 
+        }
 
+        // Set the important values into the gps variables
         fix.time = p->fix.time;
         fix.latitude = p->fix.latitude;
         fix.longitude = p->fix.longitude;
@@ -232,13 +250,16 @@ class GPSDClient {
        */
       switch (p->status) {
         case STATUS_NO_FIX:
-          fix->status.status = -1; // NavSatStatus::STATUS_NO_FIX;
+          // NavSatStatus::STATUS_NO_FIX;
+          fix->status.status = -1; 
           break;
         case STATUS_FIX:
-          fix->status.status = 0; // NavSatStatus::STATUS_FIX;
+          // NavSatStatus::STATUS_FIX;
+          fix->status.status = 0; 
           break;
         case STATUS_DGPS_FIX:
-          fix->status.status = 2; // NavSatStatus::STATUS_GBAS_FIX;
+          // NavSatStatus::STATUS_GBAS_FIX;
+          fix->status.status = 2; 
           break;
       }
 

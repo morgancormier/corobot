@@ -5,8 +5,12 @@
 #include <corobot_msgs/takepic.h>
 #include <corobot_msgs/PanTilt.h>
 #include <std_msgs/Int32.h>
-
 #include <math.h>
+
+/**
+ * This node gets the information on the buttons and joystick of the gamepad used by the user and process it.
+ */
+
 
 using namespace corobot_msgs;
 
