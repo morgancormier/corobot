@@ -1,3 +1,32 @@
+/*
+ * Copyright (c) 2009, CoroWare
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Stanford U. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include "orientation.h"
 #include <stdio.h>
 
@@ -20,7 +49,8 @@ Orientation::Orientation()
 double Orientation::ToRad(double value)
 //  degree to radian conversion
 {
-    return value*0.01745329252;  // *pi/180
+    // *pi/180
+    return value*0.01745329252;  
 }
 
 bool Orientation::isEqual(double vector1[3], double vector2[3])
@@ -43,8 +73,8 @@ void Orientation::updateAngles(float gyroscopeVector[3], float AccelerationVecto
 	timestampPreviousCall = gyroscopeTimestamp;
 }
 
-void Orientation::detectGravity(double gravity[3], float acceleration[3])
 // detect the acceleration measure is the gravity, and if yes save it
+void Orientation::detectGravity(double gravity[3], float acceleration[3])
 {
     double norm = sqrt(acceleration[0] * acceleration[0] + acceleration[1] * acceleration[1] + acceleration[2] * acceleration[2]);
     
@@ -75,8 +105,11 @@ void Orientation::detectGravity(double gravity[3], float acceleration[3])
 void Orientation::calculate_new_gravity(float acceleration[3])
 {
 	double gravity_[3];
-	detectGravity(gravity_, acceleration); // Check if the acceleration vector is the gravity
-	if(!isEqual(gravity, gravity_)) // If it is, we update out gravity vector and calcule the new angle offset due to gravity. Indeed, the gravity measure give us an error on our orientation if not taken into account.
+        // Check if the acceleration vector is the gravity
+	detectGravity(gravity_, acceleration); 
+
+// If it is, we update out gravity vector and calcule the new angle offset due to gravity. Indeed, the gravity measure give us an error on our orientation if not taken into account.
+	if(!isEqual(gravity, gravity_)) 
 	{
 
 		/*****We save the new gravity******/
@@ -101,8 +134,10 @@ void Orientation::calculate_new_gravity(float acceleration[3])
 		if(rollOffset<-1.0f)
 		    rollOffset = -1.0f;
 
-		pitchOffset -= (pitch);//We substract the actual pitch value from the algorithm
-		rollOffset = acos(rollOffset) - (roll);//We substract the actual roll value from the algorithm
+		//We substract the actual pitch value from the algorithm
+		pitchOffset -= (pitch);
+		//We substract the actual roll value from the algorithm
+		rollOffset = acos(rollOffset) - (roll);
 	}
 }
 
