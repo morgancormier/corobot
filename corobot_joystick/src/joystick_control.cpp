@@ -14,25 +14,31 @@
 
 using namespace corobot_msgs;
 
-
+// Publishers that send commands to other packages after processing the joystick actions
 ros::Publisher driveControl_pub,takepic_pub,pan_tilt_control, move_arm_pub;
 
+// used to save some interesting valuesm such as speed, camera position... 
 int speed_left, speed_right, speed_value;
 bool turningLeft, turningRight;
 int pan_value,tilt_value;
 double ory, orz, orx;
-int gripper_state; //0 = open, 1 = closed
+
+//0 = open, 1 = closed
+int gripper_state; 
 int save_image_state = 0;
 
 void velocityCallback(const std_msgs::Int32::ConstPtr& msg)
 {
 	speed_value = msg->data;
 }
+
+// Receives the joystick actions and process them
 void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
 //********************************************
 //Motor control
 
+	// the speed_left and speed_right parameters have to be between -100 and +100. The joy->axes value is between -1 and 1.
 	speed_left = joy->axes[1] * 100;
 	speed_right = joy->axes[1] * 100;
 	speed_left += -joy->axes[0] * 100;
@@ -50,11 +56,12 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
     corobot_msgs::MotorCommand msg;
     msg.leftSpeed = speed_left;
     msg.rightSpeed = speed_right;
+    // we want to drive for 3s only, so that if the connection is lost the robot will automatically stop after that time
     msg.secondsDuration = 3;
     msg.acceleration = 50;
     driveControl_pub.publish(msg);
-
-  if(joy->buttons[8]) // STOP
+ //stop
+  if(joy->buttons[8]) 
   {
         corobot_msgs::MotorCommand msg;
         msg.leftSpeed = 0;
@@ -65,7 +72,8 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   }
 //*********************************************************
 //Take picture
- if(joy->buttons[11]) // right Stick click Take Picture
+// right Stick click Take Picture
+ if(joy->buttons[11]) 
   {
     if(save_image_state == 0)
     {
@@ -81,11 +89,12 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 
 //********************************************************
 // Pan Tilt Control	
-  if(joy->axes[2]>0.5) // Pan control
+// Pan control going to left
+  if(joy->axes[2]>0.5) 
   {
 	if(pan_value > -70)
 	{
-    	pan_value -= 5;
+    		pan_value -= 5;
 		PanTilt msg;
 		msg.pan = pan_value;
 		msg.tilt = tilt_value;
@@ -93,8 +102,8 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 		pan_tilt_control.publish(msg);
 	}
   }
-
-  if(joy->axes[2]<-0.5) // Pan control
+// Pan control going to right
+  if(joy->axes[2]<-0.5) 
   {
 	if(pan_value < 70)
 	{
@@ -106,8 +115,8 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 		pan_tilt_control.publish(msg);
 	}
   }
-
-  if(joy->axes[3]<-0.5) // Tilt control
+// Tilt control going down
+  if(joy->axes[3]<-0.5) 
   {
 	if(tilt_value > -30)
 	{
@@ -119,8 +128,8 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 		pan_tilt_control.publish(msg);
 	}
   }
-
-  if(joy->axes[3]>0.5) // Tilt control
+// Tilt control going up
+  if(joy->axes[3]>0.5) 
   {
 	if(tilt_value < 30)
 	{
@@ -132,8 +141,8 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 		pan_tilt_control.publish(msg);
 	}
   }
-
- if(joy->buttons[9]) // PTZ reset
+// reset the pan and tilt position
+ if(joy->buttons[9]) 
   {
     tilt_value = 0;
     pan_value = 0;
@@ -148,7 +157,9 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 
 //*****************************************************
 //Arm control
-if(joy->axes[4]>0.5) // Shoulder control
+
+// Shoulder control
+if(joy->axes[4]>0.5) 
   {
 	if(ory > 0.7)
 	{
@@ -156,13 +167,14 @@ if(joy->axes[4]>0.5) // Shoulder control
 
 		MoveArm msg1;
 		msg1.index = MoveArm::SHOULDER;
-		msg1.position = ory * 180 / M_PI; // The value has to be in degrees
+		// The value has to be in degrees
+		msg1.position = ory * 180 / M_PI; 
 
 		move_arm_pub.publish(msg1);
 	}
   }
-
-  if(joy->axes[4]<-0.5) // Shoulder control
+// Shoulder control
+  if(joy->axes[4]<-0.5) 
   {
     
 	if( ory < 2)
@@ -171,13 +183,14 @@ if(joy->axes[4]>0.5) // Shoulder control
 
 		MoveArm msg1;
 		msg1.index = MoveArm::SHOULDER;
-		msg1.position = ory * 180 / M_PI; // The value has to be in degrees
+		// The value has to be in degrees
+		msg1.position = ory * 180 / M_PI; 
 
 		move_arm_pub.publish(msg1);
 	}
   }
-
-  if(joy->axes[5]<-0.5) // Elbow control
+// Elbow control
+  if(joy->axes[5]<-0.5) 
   {
     
     if( orz > 0.8)
@@ -186,13 +199,14 @@ if(joy->axes[4]>0.5) // Shoulder control
 
 		MoveArm msg1;
 		msg1.index = MoveArm::ELBOW;
-		msg1.position = orz * 180 / M_PI; // The value has to be in degrees
+		// The value has to be in degrees
+		msg1.position = orz * 180 / M_PI; 
 
 		move_arm_pub.publish(msg1);
 	}
   }
-
-  if(joy->axes[5]>0.5) // Elbow control
+// Elbow control
+  if(joy->axes[5]>0.5) 
   {
     
     if( orz < 2.5)
@@ -201,30 +215,35 @@ if(joy->axes[4]>0.5) // Shoulder control
 
 		MoveArm msg1;
 		msg1.index = MoveArm::ELBOW;
-		msg1.position = orz * 180 / M_PI; // The value has to be in degrees
+		// The value has to be in degrees
+		msg1.position = orz * 180 / M_PI; 
 
 		move_arm_pub.publish(msg1);
 	}
   }
-
- if(joy->buttons[7]) // arm reset
+// arm reset
+ if(joy->buttons[7]) 
   {
     	ory = orz = M_PI/2;
 
 	MoveArm msg1;
 	msg1.index = MoveArm::ELBOW;
-	msg1.position = orz * 180 / M_PI; // The value has to be in degrees
+	// The value has to be in degrees
+	msg1.position = orz * 180 / M_PI; 
 
 	move_arm_pub.publish(msg1);
 
 	msg1.index = MoveArm::SHOULDER;
-	msg1.position = ory * 180 / M_PI; // The value has to be in degrees
+	// The value has to be in degrees
+	msg1.position = ory * 180 / M_PI; 
 
 	move_arm_pub.publish(msg1);
   }
 //******************************************
 //wrist control
- if(joy->buttons[4]) // Wrist Left
+
+// Wrist Left
+ if(joy->buttons[4]) 
   {
     
     if(orx < 4.5)
@@ -233,13 +252,14 @@ if(joy->axes[4]>0.5) // Shoulder control
 
 	  MoveArm msg1;
 	  msg1.index = MoveArm::WRIST_ROTATION;
-	  msg1.position = orx * 180 / M_PI; // The value has to be in degrees
+	  // The value has to be in degrees
+	  msg1.position = orx * 180 / M_PI; 
 
 	  move_arm_pub.publish(msg1);
 	}
   }
-
- if(joy->buttons[5]) // Wrist Right
+// Wrist Right
+ if(joy->buttons[5]) 
   {
     if(orx > 0.1)
     {
@@ -247,8 +267,8 @@ if(joy->axes[4]>0.5) // Shoulder control
 
    	  MoveArm msg1;
 	  msg1.index = MoveArm::WRIST_ROTATION;
-	  msg1.position = orx * 180 / M_PI; // The value has to be in degrees
-
+	  // The value has to be in degrees
+	  msg1.position = orx * 180 / M_PI; 
 	  move_arm_pub.publish(msg1);
 	}
   }
@@ -264,7 +284,8 @@ if(joy->axes[4]>0.5) // Shoulder control
 
     MoveArm msg1;
     msg1.index = MoveArm::GRIPPER;
-    msg1.position = (gripper_state * 180); // The value has to be in degrees
+    // The value has to be in degrees
+    msg1.position = (gripper_state * 180); 
 
     move_arm_pub.publish(msg1);
 
@@ -278,7 +299,8 @@ int main(int argc, char** argv)
   
   pan_value = 0;
   tilt_value = 0;
-  orx = 2.3;//initial value for wrist
+  //initial value for wrist
+  orx = 2.3;
   ory = M_PI/2;
   orz = M_PI/2;
   gripper_state = 0;
@@ -299,7 +321,8 @@ int main(int argc, char** argv)
   move_arm_pub = n.advertise<MoveArm>("armPosition",10);
 
   ros::Subscriber sub = n.subscribe<sensor_msgs::Joy>("joy", 1000, joyCallback);
-  ros::Subscriber velocity = n.subscribe<std_msgs::Int32>("velocityValue", 1000, velocityCallback); //choose the maximum speed for the robot. value is between 0 and 100, 100 beeing the fastest possible
-
+  //choose the maximum speed for the robot. value is between 0 and 100, 100 beeing the fastest possible
+  ros::Subscriber velocity = n.subscribe<std_msgs::Int32>("velocityValue", 1000, velocityCallback);
+  
   ros::spin();
 }

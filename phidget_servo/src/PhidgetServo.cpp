@@ -11,8 +11,12 @@
 
 //Declare a servo handle
 CPhidgetAdvancedServoHandle servo = 0;
+
+// Servo position publisher
 ros::Publisher position_pub;
-int servoError = 0; // used for diagnostics purpose
+
+// used for diagnostics purpose
+int servoError = 0; 
 
 
 /**
@@ -67,10 +71,11 @@ void setTypeCallback(const corobot_msgs::ServoType &msg)
 	CPhidgetAdvancedServo_setServoType(servo, msg.index, (CPhidget_ServoType)msg.type);
 }
 
-void servo_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
+
 /**
  * @brief Function that will report the status of the hardware to the diagnostic topic
  */
+void servo_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
 	if (!servoError)  
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "intialized");
@@ -100,7 +105,8 @@ int main(int argc, char* argv[])
 	//create an updater that will send information on the diagnostics topics
 	diagnostic_updater::Updater updater;
 	updater.setHardwareIDf("Phidget");
-	updater.add("Servo", servo_diagnostic); //function that will be executed with updater.update()
+	//function that will be executed with updater.update()
+	updater.add("Servo", servo_diagnostic); 
 
 
 	//create the servo object
@@ -118,8 +124,8 @@ int main(int argc, char* argv[])
 	//Requires the handle for the Phidget, the function that will be called, and an arbitrary pointer that will be supplied to the callback function (may be NULL).
 	CPhidgetAdvancedServo_set_OnPositionChange_Handler(servo,PositionChangeHandler,NULL);
 
-
-	n_private.param("serialNumber", serialNumber, -1); //serial number of the phidget servo board, -1 if not specified
+	//serial number of the phidget servo board, -1 if not specified
+	n_private.param("serialNumber", serialNumber, -1); 
 
 	//open the servo for device connections
 	err = CPhidget_open((CPhidgetHandle)servo, serialNumber);
@@ -180,8 +186,6 @@ int main(int argc, char* argv[])
 	if (err != 0)
 		ROS_ERROR("error setting up the type of the servo motor number: 7");
 
-
-	//Declare every services
 
 
 	//Declare every topics

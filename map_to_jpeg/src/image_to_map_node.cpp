@@ -12,21 +12,38 @@
 
 using namespace std;
 
-double resolution = 0.05; //resolution of the map
+//resolution of the map
+double resolution = 0.05; 
 
 /**
  * @brief This node provides images as occupancy grid maps.
  */
 class MapAsImageProvider
 {
+
 public:
+
+  // Publisher for the map
+  ros::Publisher map_publisher;
+
+  //Subscriber to the image topic
+  image_transport::Subscriber image_transport_subscriber_map;
+
+  image_transport::ImageTransport* image_transport_;
+
+  ros::NodeHandle n_;
+  ros::NodeHandle pn_;
+
+
   MapAsImageProvider()
     : pn_("~")
   {
 
     image_transport_ = new image_transport::ImageTransport(n_);
-    image_transport_subscriber_map = image_transport_->subscribe("map_image_raw", 1, &MapAsImageProvider::mapCallback,this); //subscribe to the image topic representing the map
-    map_publisher = n_.advertise<nav_msgs::OccupancyGrid>("/map_from_jpeg", 50); // publish the map as an occupancy grid
+    //subscribe to the image topic representing the map
+    image_transport_subscriber_map = image_transport_->subscribe("map_image_raw", 1, &MapAsImageProvider::mapCallback,this); 
+    // publish the map as an occupancy grid
+    map_publisher = n_.advertise<nav_msgs::OccupancyGrid>("/map_from_jpeg", 50); 
 
 
     ROS_INFO("Image to Map node started.");
@@ -70,18 +87,9 @@ public:
 		map.data.push_back(100);
 	}
     }
-    map_publisher.publish(map); //publish the map
+    //publish the map
+    map_publisher.publish(map); 
   }
-
-  ros::Publisher map_publisher;
-
-
-  image_transport::Subscriber image_transport_subscriber_map;
-
-  image_transport::ImageTransport* image_transport_;
-
-  ros::NodeHandle n_;
-  ros::NodeHandle pn_;
 
 };
 
@@ -92,6 +100,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh("~");
   nh.param("resolution", resolution, 0.05); 
 
+  // The 
   MapAsImageProvider map_image_provider;
 
   ros::spin();

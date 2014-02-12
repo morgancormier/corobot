@@ -60,8 +60,9 @@ motorSpeedError = "Cannot Set Motor Speed - Make sure the Phidget Motor controll
 encoderBoardDisconnected = "Phidgets Encoder board disconnected - Please make sure it is connected, try to disconnect and reconnect it, or restart"
 encoderValueError = "Cannot get encoder value - Please make sure the encoder board and encoders are connected"
 
+
+# stop the motors
 def stop():
-    # stop the motors
     try:
         motorControl.setVelocity(leftWheels,0);
 
@@ -77,13 +78,9 @@ def stop():
     return(True)
 
 
+# move the motors as requested. Request is a corobot_msgs/MotorCommand.msg message 
+# It containing an acceleration, speed for both the left and right wheel and a time value
 def move(request):
-    # move the motors as requested. Request is a corobot_msgs/MotorCommand.msg message
-    """Cause the CoroBot to move or stop moving
-
-    Request a common acceleration, wheel directions and wheel speeds
-
-    """
     global timer
 
     if timer:
@@ -97,8 +94,8 @@ def move(request):
             request.rightSpeed,
             request.acceleration
             )
+
     # Make sure the acceleration and the speed is within the limits
-    
     if request.acceleration > maxAcceleration:
         acceleration = float(maxAcceleration)
     elif request.acceleration < minAcceleration:
@@ -168,10 +165,10 @@ def move(request):
     return(True)
 
 
+"""move the left wheel as requested. This function doesn't use timer, and doesn't setup acceleration. 
+   However it is used by the differential drive package to be able to command the robot with twist messages.
+"""
 def left_move(request):
-    """move the left wheel as requested. This function doesn't use timer, and doesn't setup acceleration. 
-       However it is used by the differential drive package to be able to command the robot with twist messages.
-    """
     leftSpeed = float(request.data)
 
     if leftSpeed < minSpeed:
@@ -236,14 +233,15 @@ def mcVelocityChanged(e):
     return
 
 
+# left encoder callback, used with phidget 1065 devices
 def leftEncoderUpdated(e):
-    # left encoder callback, used with phidget 1065 devices
     global leftPosition, rightPosition, posdataPub, leftEncoderPub
 	
     leftPosition += e.positionChange
     try:
         if motorControlRight:
-            rightPosition = motorControlRight.getEncoderPosition(rightWheels) # update the right encoder so that we have a correct value of both encoders at a given time.
+            # update the right encoder so that we have a correct value of both encoders at a given time.
+            rightPosition = motorControlRight.getEncoderPosition(rightWheels) 
     except:
         encodersError = 2
         
@@ -252,15 +250,15 @@ def leftEncoderUpdated(e):
     return
 
 
-
+# right encoder callback, used with phidget 1065 devices
 def rightEncoderUpdated(e):
-    # right encoder callback, used with phidget 1065 devices
     global leftPosition, rightPosition, posdataPub, rightEncoderPub
 
     rightPosition -= e.positionChange
     try:
         if motorControl:
-            leftPosition = motorControl.getEncoderPosition(leftWheels) # update the left encoder so that we have a correct value of both encoders at a given time.
+            # update the left encoder so that we have a correct value of both encoders at a given time.
+            leftPosition = motorControl.getEncoderPosition(leftWheels) 
     except:
         encodersError = 2
         
@@ -268,9 +266,8 @@ def rightEncoderUpdated(e):
     return
 
 
-
+# encoder board callback, used only if a phidget 1064 is present
 def encoderBoardPositionChange(e):
-    # encoder board callback, used only if a phidget 1064 is present
     global leftEncoderPosition, rightEncoderPosition, leftPosition, rightPosition
 
     if e.index == leftEncoderPosition:
@@ -282,10 +279,8 @@ def encoderBoardPositionChange(e):
     return
 
 
-
+# send message on the position topic
 def sendEncoderPosition():
-   # send message on the position topic
-
     global posdataPub, rightEncoderPub, leftEncoderPub, leftPosition, rightPosition
     msg = PosMsg()
     msg.px = leftPosition
@@ -303,12 +298,11 @@ def sendEncoderPosition():
     return
     
     
-    
+""" Check the encoders position and see if the wheels have moved or not.
+    If the encoders didn't move but the motors have a speed set, that means that the robot bumped
+    in which case we run the backAndRotate() function. 
+"""    
 def checkEncoders():
-    """ Check the encoders position and see if the wheels have moved or not.
-        If the encoders didn't move but the motors have a speed set, that means that the robot bumped
-        in which case we run the backAndRotate() function. 
-    """
 
     global timer, phidget1065, pastCurrentLeft, pastCurrentRight, leftSpeed, rightSpeed, motorControl, motorControlRight, encoders, leftPosition, rightPosition
 
@@ -321,45 +315,48 @@ def checkEncoders():
         newLeftPosition = encoders.getPosition(leftWheels)
         newRightPosition = encoders.getPosition(rightWheels)        
 
+
     #Check if the encoder for left or right wheel didn't move a lot compared to the speed it should be at
     if (((newLeftPosition - leftPosition) < (leftSpeed*10) and (newLeftPosition - leftPosition) > -(leftSpeed*10) ) or ((newRightPosition - rightPosition) < (rightSpeed*10) and (newRightPosition - rightPosition) > -(rightSpeed*10))):
-            stop()
-    
-    newLeftSpeed = motorControl.getVelocity(leftWheels)
-    if (phidget1065 == True):
-        newRightSpeed = motorControlRight.getVelocity(rightWheels)
-    else:
-        newRightSpeed = motorControl.getVelocity(rightWheels)
+        # Bump detected, we stop the motors
+        stop()
 
-    # We also check if there is a big increase (70% more) in the current in the motor, indicating an obstacle 
+    # get the current going to each motors
     currentLeft = motorControl.getCurrent(leftWheels)
     if (phidget1065 == True):
         currentRight = motorControlRight.getCurrent(rightWheels)
     else:
         currentRight = motorControl.getCurrent(rightWheels)
+
+    # We also check if there is a big increase (70% more) in the current in the motor, indicating an obstacle 
     if(pastCurrentRight != 0.0 and pastCurrentLeft != 0.0 and ( currentLeft >= pastCurrentLeft * 1.7 or currentRight >= pastCurrentRight * 1.7 ) and newLeftSpeed == leftSpeed and newRightSpeed == rightSpeed and rightSpeed != 0 and leftSpeed != 0):
+        #bump detect, we stop the motors
         stop()
+
     pastCurrentLeft = currentLeft
     pastCurrentRight = currentRight
 
     leftPosition = newLeftPosition
     rightPosition = newRightPosition
 
-    leftSpeed = newLeftSpeed
-    rightSpeed = newRightSpeed
+    # get the velocity of the motors
+    leftSpeed = motorControl.getVelocity(leftWheels)
+    if (phidget1065 == True):
+        rightSpeed = motorControlRight.getVelocity(rightWheels)
+    else:
+        rightSpeed = motorControl.getVelocity(rightWheels)
 
+    # start the timer again
     timer = Timer(0.5, checkEncoders)
     timer.start()
     return      
 
 
-
+""" Open and Attach the phidget motor control board. Check if an 1064 or 1065 board is used and attach another 1065 board in case a 1065 is detected, or attach an encoder board in case a 1064 is detected
+"""
 def initMotorAndEncoderBoards():
-    """ Open and Attach the phidget motor control board. Check if an 1064 or 1065 board is used and attach another 1065 board in case a 1065 is detected, or attach an encoder board in case a 1064 is detected
-    """
 
     global motorControl, motorControlRight, rightWheels, phidget1065, encoders, leftEncoderPosition, rightEncoderPosition, motors_inverted, encoders_inverted
-    
 
     try:
         motorControl = MotorControl()
@@ -375,6 +372,7 @@ def initMotorAndEncoderBoards():
 
         #attach the board
         motorControl.waitForAttach(10000)
+
         """use the function getMotorCount() to know how many motors the Phidget board can take
 
         if the result is more than 1, we have a 1064 board and we take care of both motors with one motorControl variable. We need to handle the Phidget encoder board that is 
@@ -406,12 +404,14 @@ def initMotorAndEncoderBoards():
             motorControlRight.openPhidget()
             motorControlRight.waitForAttach(10000)
 
-        else: # we have a motor controller board that control 2 motors but doesn't get any encoder input, so we need to initialize the encoder board.
+        # we have a motor controller board that control 2 motors but doesn't get any encoder input, so we need to initialize the encoder board.
+        else: 
             encoders = Encoder()
             encoders.setOnPositionChangeHandler(encoderBoardPositionChange)
             encoders.openPhidget()
             encoders.waitForAttach(10000)
-            if(motors_inverted or encoders_inverted): # some robots have the left and right encoders switched by mistake
+            # some robots have the left and right encoders switched by mistake
+            if(motors_inverted or encoders_inverted): 
                 leftEncoderPosition = 1;
                 rightEncoderPosition = 0;
             encoders.setEnabled(leftEncoderPosition, True)
@@ -444,9 +444,8 @@ def initMotorAndEncoderBoards():
     return
 
 
-
+#Called every second and send diagnostic messages to tell the user if everything is ok or if something is wrong
 def diagnosticsCallback (event):
-    #Called every second and send diagnostic messages to tell the user if everything is ok or if something is wrong
 
     array = DiagnosticArray()
     
@@ -477,13 +476,13 @@ def diagnosticsCallback (event):
     diagnosticPub.publish(array)
 
 
+"""Initialize the PhidgetMotor service
+
+   Establish a connection with the Phidget HC Motor Control and
+   then with the ROS Master as the service PhidgetMotor
+
+"""
 def setupMoveService():
-    """Initialize the PhidgetMotor service
-
-    Establish a connection with the Phidget HC Motor Control and
-    then with the ROS Master as the service PhidgetMotor
-
-    """
 
     rospy.init_node(
             'PhidgetMotor',
@@ -497,7 +496,8 @@ def setupMoveService():
     encoders_inverted = rospy.get_param('~encoders_inverted', False)
     stop_when_obstacle = rospy.get_param('~stop_when_obstacle', False)
 
-    initMotorAndEncoderBoards() # initialize the phidgets boards
+    # initialize the phidgets boards
+    initMotorAndEncoderBoards() 
 
     if motorControl != 0 and motorControl.isAttached():
         minAcceleration = motorControl.getAccelerationMin(leftWheels)
@@ -505,8 +505,12 @@ def setupMoveService():
 
 
         phidgetMotorTopic = rospy.Subscriber("PhidgetMotor", MotorCommand ,move)
-        leftWheelTopic = rospy.Subscriber("lmotor_cmd", Float32 ,left_move) # topic used for differential_drive package to enable twist commands
-        rightWheelTopic = rospy.Subscriber("rmotor_cmd", Float32 ,right_move)# topic used for differential_drive package to enable twist commands
+
+        # topic used for differential_drive package to enable twist commands
+        leftWheelTopic = rospy.Subscriber("lmotor_cmd", Float32 ,left_move) 
+
+        # topic used for differential_drive package to enable twist commands
+        rightWheelTopic = rospy.Subscriber("rmotor_cmd", Float32 ,right_move)
 
         posdataPub = rospy.Publisher("position_data", PosMsg)
         leftEncoderPub = rospy.Publisher("lwheel", Int16)
