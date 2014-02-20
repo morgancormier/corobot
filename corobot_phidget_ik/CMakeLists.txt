@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(corobot_phidget_ik)
 
-find_package(catkin REQUIRED COMPONENTS roscpp corobot_msgs sensor_msgs std_msgs corobot_diagnostics)
+find_package(catkin REQUIRED COMPONENTS roscpp corobot_msgs sensor_msgs std_msgs corobot_diagnostics std_srvs)
 
 catkin_package(
    INCLUDE_DIRS include

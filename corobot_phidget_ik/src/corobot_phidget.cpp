@@ -42,7 +42,7 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
 #include <corobot_diagnostics/diagnostics.h>
-
+#include <std_srvs/Empty.h>
 
 CPhidgetInterfaceKitHandle ifKit = 0;
 CPhidgetSpatialHandle spatial = 0;
@@ -61,6 +61,10 @@ bool imu = true;
 //topics where we want to publish to
 ros::Publisher powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub; 
 	
+// Service that when called calibrates the gyroscope
+// The service is an empty one, so no data is transmited
+ros::ServiceServer calibrate_gyroscope_service;
+  
 //Output bw for the sonars. -1 if no sonars are present
 int bwOutput = -1; 
 
@@ -282,7 +286,12 @@ int SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr, CPhidgetSpa
 	return 0;
 }
 
-
+// Zero the gyroscope when the service is called
+// The procedure takes 1-2 seconds and the IMU should not move during the process
+bool calibrate_gyroscope(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+  CPhidgetSpatial_zeroGyro(spatial);
+}
 
 
 int interfacekit_simple()
@@ -346,6 +355,7 @@ int interfacekit_simple()
 		{
 			imu_pub = n.advertise<sensor_msgs::Imu>("imu_data",100);
 			mag_pub = n.advertise<sensor_msgs::MagneticField>("magnetic_data",100);
+      calibrate_gyroscope_service = n.advertiseService("calibrate_gyroscope",calibrate_gyroscope);
 		}
 
 		CPhidgetSpatial_setDataRate(spatial, 4);
