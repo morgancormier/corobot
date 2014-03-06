@@ -1,3 +1,32 @@
+/*
+ * Copyright (c) 2009, CoroWare
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Stanford U. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include "ros/ros.h"
 #include <stdio.h>
 #include <phidget21.h>
@@ -11,8 +40,12 @@
 
 //Declare a servo handle
 CPhidgetAdvancedServoHandle servo = 0;
+
+// Servo position publisher
 ros::Publisher position_pub;
-int servoError = 0; // used for diagnostics purpose
+
+// used for diagnostics purpose
+int servoError = 0; 
 
 
 /**
@@ -67,10 +100,11 @@ void setTypeCallback(const corobot_msgs::ServoType &msg)
 	CPhidgetAdvancedServo_setServoType(servo, msg.index, (CPhidget_ServoType)msg.type);
 }
 
-void servo_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
+
 /**
  * @brief Function that will report the status of the hardware to the diagnostic topic
  */
+void servo_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
 	if (!servoError)  
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "intialized");
@@ -100,7 +134,8 @@ int main(int argc, char* argv[])
 	//create an updater that will send information on the diagnostics topics
 	diagnostic_updater::Updater updater;
 	updater.setHardwareIDf("Phidget");
-	updater.add("Servo", servo_diagnostic); //function that will be executed with updater.update()
+	//function that will be executed with updater.update()
+	updater.add("Servo", servo_diagnostic); 
 
 
 	//create the servo object
@@ -118,8 +153,8 @@ int main(int argc, char* argv[])
 	//Requires the handle for the Phidget, the function that will be called, and an arbitrary pointer that will be supplied to the callback function (may be NULL).
 	CPhidgetAdvancedServo_set_OnPositionChange_Handler(servo,PositionChangeHandler,NULL);
 
-
-	n_private.param("serialNumber", serialNumber, -1); //serial number of the phidget servo board, -1 if not specified
+	//serial number of the phidget servo board, -1 if not specified
+	n_private.param("serialNumber", serialNumber, -1); 
 
 	//open the servo for device connections
 	err = CPhidget_open((CPhidgetHandle)servo, serialNumber);
@@ -180,8 +215,6 @@ int main(int argc, char* argv[])
 	if (err != 0)
 		ROS_ERROR("error setting up the type of the servo motor number: 7");
 
-
-	//Declare every services
 
 
 	//Declare every topics

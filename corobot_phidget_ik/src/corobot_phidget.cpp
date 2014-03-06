@@ -1,6 +1,31 @@
-// Copyright 2008 Phidgets Inc.  All rights reserved.
-// This work is licensed under the Creative Commons Attribution 2.5 Canada License. 
-// view a copy of this license, visit http://creativecommons.org/licenses/by/2.5/ca/
+/*
+ * Copyright (c) 2009, CoroWare
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Stanford U. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 
 #include "ros/ros.h"
@@ -17,29 +42,46 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
 #include <corobot_diagnostics/diagnostics.h>
-
+#include <std_srvs/Empty.h>
 
 CPhidgetInterfaceKitHandle ifKit = 0;
 CPhidgetSpatialHandle spatial = 0;
 
 Orientation orientation_calculation;
 
-bool m_rearBumperPresent = false; // tells if the rear Bumper is present on the robot or not.
-bool sonarsPresent = false; //tells if some sonars are connected
-bool imu = true; //tells if the imu are connected
+// tells if the rear Bumper is present on the robot or not.
+bool m_rearBumperPresent = false; 
 
-ros::Publisher powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub; //topics where we want to publish to
+//tells if some sonars are connected
+bool sonarsPresent = false; 
+
+//tells if the imu are connected
+bool imu = true; 
+
+//topics where we want to publish to
+ros::Publisher powerdata_pub,irData_pub,bumper_pub, imu_pub, mag_pub, sonar_pub, other_pub; 
 	
+// Service that when called calibrates the gyroscope
+// The service is an empty one, so no data is transmited
+ros::ServiceServer calibrate_gyroscope_service;
+  
+//Output bw for the sonars. -1 if no sonars are present
+int bwOutput = -1; 
 
-int bwOutput = -1; //Output bw for the sonars. -1 if no sonars are present
-int strobeOutput = -1; //Output strobe for the sonars. -1 if no sonars are present
-int lastSonarInput  = -1; //last input index for the sonars. -1 if no sonars are present
-int firstSonarInput = -1; //first input index for the sonars. -1 if no sonars are present
+//Output strobe for the sonars. -1 if no sonars are present
+int strobeOutput = -1; 
+
+//last input index for the sonars. -1 if no sonars are present
+int lastSonarInput  = -1;
+
+//first input index for the sonars. -1 if no sonars are present 
+int firstSonarInput = -1; 
 int batteryPort = 0;
 int irFrontPort = 1;
 int irBackPort = 2;
 
-int interfaceKitError = 0, spatialError = 0; //for diagnostics purpose
+//for diagnostics purpose
+int interfaceKitError = 0, spatialError = 0; 
 
 
 
@@ -61,13 +103,16 @@ static float irVoltageToDistance(float volts)
 {
   int sensorValue=int(volts*200.0+0.5);
   float distanceInCm;
-  if (sensorValue>=80 && sensorValue <= 530) //Outside of those bonds, the value is incorrect as our sensor can detect froom 10cm to 80cm only
+//Outside of those bonds, the value is incorrect as our sensor can detect froom 10cm to 80cm only
+  if (sensorValue>=80 && sensorValue <= 530) 
     {
       distanceInCm= 2076/(sensorValue-11);
     }
-  else //out of bonds
+  //out of bonds
+  else 
     {
-      distanceInCm = 2540; // 1000 inches in cm
+      // 1000 inches in cm
+      distanceInCm = 2540; 
     }
   return distanceInCm/100.0;
 }
@@ -94,7 +139,8 @@ int sendSonarResult()
 {
 	
 	CPhidgetInterfaceKit_setOutputState(ifKit, strobeOutput, 1);
-	ros::Duration(0.002).sleep(); // sleep for 2ms
+	// sleep for 2ms
+	ros::Duration(0.002).sleep(); 
 	CPhidgetInterfaceKit_setOutputState(ifKit, strobeOutput, 0);
 }
 
@@ -108,17 +154,20 @@ int DigitalInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index,
     	msg.value = ((State == PTRUE)?1:0);
     	msg.index = Index;
 	
-	if (Index <= 3 && m_rearBumperPresent == true && bumper_pub) //Bumper sensor, front or rear
+	//Bumper sensor, front or rear
+	if (Index <= 3 && m_rearBumperPresent == true && bumper_pub) 
 	{
         	msg.type = msg.BUMPER;
 		bumper_pub.publish(msg);
 	}
-	else if (Index <= 1 && bumper_pub) //Bumper sensor, front 
+	//Bumper sensor, front
+	else if (Index <= 1 && bumper_pub)  
 	{
 		msg.type = msg.BUMPER;
 		bumper_pub.publish(msg);
 	}
-	else if(other_pub) // we don't know what it is but we publish
+	// we don't know what it is but we publish
+	else if(other_pub) 
 	{
 		msg.type = msg.OTHER;
 		other_pub.publish(msg);
@@ -136,8 +185,8 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
 	//sensorValue 0-1000 ==> 0-5V
 
 
-        
-    if(batteryPort == Index && powerdata_pub) //// Update power data
+    // Update power data    
+    if(batteryPort == Index && powerdata_pub) 
     {
         corobot_msgs::PowerMsg powerdata;
         powerdata.volts = (float) (Value - 500) * 0.0734;
@@ -166,7 +215,8 @@ int AnalogInputHandler(CPhidgetInterfaceKitHandle IFK, void *usrptr, int Index, 
         data.value = irVoltageToDistance((float) Value  / 200.0);
 	irData_pub.publish(data);
     }
-    else if(Index >= firstSonarInput && Index <= lastSonarInput && sonar_pub)//sonar
+    //sonar
+    else if(Index >= firstSonarInput && Index <= lastSonarInput && sonar_pub)
     {
 	    corobot_msgs::SensorMsg data;
         data.type = data.ULTRASOUND;
@@ -236,7 +286,12 @@ int SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr, CPhidgetSpa
 	return 0;
 }
 
-
+// Zero the gyroscope when the service is called
+// The procedure takes 1-2 seconds and the IMU should not move during the process
+bool calibrate_gyroscope(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+  CPhidgetSpatial_zeroGyro(spatial);
+}
 
 
 int interfacekit_simple()
@@ -275,7 +330,8 @@ int interfacekit_simple()
         	irData_pub = n.advertise<corobot_msgs::SensorMsg>("infrared_data", 100);
         	powerdata_pub = n.advertise<corobot_msgs::PowerMsg>("power_data", 100);
         	bumper_pub = n.advertise<corobot_msgs::SensorMsg>("bumper_data", 100);
-        	other_pub = n.advertise<corobot_msgs::SensorMsg>("sensor_data", 100); // sensors connected to the phidget interface kit other than bumpers, voltage sensor, ir sensor and sonars. 
+		// sensors connected to the phidget interface kit other than bumpers, voltage sensor, ir sensor and sonars. 
+        	other_pub = n.advertise<corobot_msgs::SensorMsg>("sensor_data", 100); 
 	}	
 	
 
@@ -299,6 +355,7 @@ int interfacekit_simple()
 		{
 			imu_pub = n.advertise<sensor_msgs::Imu>("imu_data",100);
 			mag_pub = n.advertise<sensor_msgs::MagneticField>("magnetic_data",100);
+      calibrate_gyroscope_service = n.advertiseService("calibrate_gyroscope",calibrate_gyroscope);
 		}
 
 		CPhidgetSpatial_setDataRate(spatial, 4);
@@ -311,11 +368,14 @@ int interfacekit_simple()
 	{
 		CPhidgetInterfaceKit_setOutputState(ifKit, bwOutput, 1);
 		CPhidgetInterfaceKit_setOutputState(ifKit, strobeOutput, 0);
-		ros::Duration(0.250).sleep(); // sleep for 250ms
+		// sleep for 250ms
+		ros::Duration(0.250).sleep(); 
 		CPhidgetInterfaceKit_setOutputState(ifKit, strobeOutput, 1);
-		ros::Duration(0.002).sleep(); // sleep for 2ms
+		// sleep for 2ms
+		ros::Duration(0.002).sleep(); 
 		CPhidgetInterfaceKit_setOutputState(ifKit, strobeOutput, 0);
-		ros::Duration(0.150).sleep(); // sleep for 150ms
+		// sleep for 150ms
+		ros::Duration(0.150).sleep(); 
 
 		sonar_pub = n.advertise<corobot_msgs::SensorMsg>("sonar_data", 100);
 	}
@@ -360,26 +420,34 @@ int main(int argc, char* argv[])
 	nh.param("strobeOutput", strobeOutput, -1);
 	nh.param("lastSonarInput", lastSonarInput, -1);
 	nh.param("firstSonarInput", firstSonarInput, -1);
-	nh.param("battery", batteryPort, 0); //index of the battery voltage sensor
-	nh.param("irFront", irFrontPort, 1); // index of the front ir sensor
-	nh.param("irBack", irBackPort, 2); //index of the back ir sensor
+	//index of the battery voltage sensor
+	nh.param("battery", batteryPort, 0); 
+	// index of the front ir sensor
+	nh.param("irFront", irFrontPort, 1); 
+	//index of the back ir sensor
+	nh.param("irBack", irBackPort, 2); 
 	nh.param("imu", imu, true);
 
 	//create an updater that will send information on the diagnostics topics
 	diagnostic_updater::Updater updater;
 	updater.setHardwareIDf("Phidget");
-	updater.add("Interface Kit", phidget_ik_diagnostic); //function that will be executed with updater.update()
-	updater.add("Spatial", phidget_spatial_diagnostic); //function that will be executed with updater.update()	
+	//function that will be executed with updater.update()
+	updater.add("Interface Kit", phidget_ik_diagnostic); 
+	//function that will be executed with updater.update()
+	updater.add("Spatial", phidget_spatial_diagnostic); 	
 
 	interfacekit_simple();
     ros::Rate rate(70);
 	while (ros::ok())
     	{
-        	ros::spinOnce(); // ROS loop
+		// ROS loop
+        	ros::spinOnce(); 
         
-		if(sonarsPresent) // acquire new sonar data if sonar sensors are present
+		// acquire new sonar data if sonar sensors are present
+		if(sonarsPresent) 
 			sendSonarResult();
-		updater.update(); //update diagnostics
+		//update diagnostics
+		updater.update(); 
 		rate.sleep();
     	}
 

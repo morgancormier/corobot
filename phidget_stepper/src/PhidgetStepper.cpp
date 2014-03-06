@@ -1,3 +1,32 @@
+/*
+ * Copyright (c) 2009, CoroWare
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Stanford U. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include "ros/ros.h"
 #include <stdio.h>
 #include <math.h>
@@ -11,11 +40,12 @@
 #include <corobot_diagnostics/diagnostics.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/publisher.h>
+
 //Enumeration to identify the position of a stepper
 typedef enum
 {
-	armBaseRotation,
-    armShoulder,
+  armBaseRotation,
+  armShoulder,
 	armElbow,
 	armWrist,
 	armGripper,
@@ -32,18 +62,28 @@ typedef struct
 	CPhidgetStepperHandle handle;
 } stepper;
 
-stepper* steppers = NULL; // list of connected servos
-int number_stepper = 0; // THe number of connected stepper motors
-int stepperError = 0; // used for diagnostics purpose
-ros::Publisher positionPublisher; // Publish the position of the left and right wheel motors, if any is present
-ros::Publisher stepperPositionPublisher; // Publish the position of stepper motors present in an arm
+// list of connected servos
+stepper* steppers = NULL; 
+
+// The number of connected stepper motors
+int number_stepper = 0; 
+
+// used for diagnostics purpose
+int stepperError = 0; 
+
+// Publish the position of the left and right wheel motors, if any is present
+ros::Publisher positionPublisher; 
+
+// Publish the position of stepper motors present in an arm
+ros::Publisher stepperPositionPublisher; 
 int64_t leftPosition = 0;
 int64_t rightPosition = 0;
 
-void setStepperPosition(const corobot_msgs::MoveArm &msg)
+
 /**
  * @brief Topic to move the stepper motors of the Corobot
  */ 
+void setStepperPosition(const corobot_msgs::MoveArm &msg)
 {
 	int err;
 	for(int i; i<number_stepper; i++)
@@ -65,6 +105,7 @@ void setStepperPosition(const corobot_msgs::MoveArm &msg)
 	}
 }
 
+// publishes the "encoder" position
 void publishPosition()
 {
   corobot_msgs::PosMsg msg;
@@ -74,10 +115,12 @@ void publishPosition()
   positionPublisher.publish(msg);
 }
 
+// Callback called by the phidgets API. It gives us the latest position of the motor
 int positionCallback(CPhidgetStepperHandle phid, void *userPtr, int index, __int64 position)
 {
   stepper * stepperMoved = (stepper*) userPtr;
 
+  // The information is treated differently whether it is concerning a wheel servo or an arm
   if (stepperMoved->type == leftWheel)
   {
     leftPosition = position;
@@ -94,20 +137,27 @@ int positionCallback(CPhidgetStepperHandle phid, void *userPtr, int index, __int
     msg.index = stepperMoved->type;
     msg.position = position;
 
+    // Publishes the position of the stepper
     stepperPositionPublisher.publish(msg);
   } 
 }
 
-void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
+
 /**
- * @brief initialise the list of servos (variable servos) and the number of servos connected. It reads this from the yaml file. 
+ * @brief initialise the list of stepper and the number of stepper connected. It reads this from the yaml file. 
  */ 
+void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
 {
+  // Search for all possible stepper position and find the serial number assigned to it.
+  // A serial number of -1 means no stepper controller board is assigned at this position, else it is the serial number of the board assigned.
+
 	if(stepper_list.hasMember("leftWheel") && (int)stepper_list["leftWheel"]["serial"] != -1)
 	{
+    // save the type of the stepper motor
 		steppers[number_stepper].type = leftWheel;
+    // save the serial number of the stepper motor board
 		steppers[number_stepper].serial = (int) stepper_list["leftWheel"]["serial"];
-        steppers[number_stepper].handle = 0;
+    steppers[number_stepper].handle = 0;
         
 		number_stepper++;
 	}
@@ -115,7 +165,7 @@ void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
 	{
 		steppers[number_stepper].type = rightWheel;
 		steppers[number_stepper].serial = (int) stepper_list["rightWheel"]["serial"];
-        steppers[number_stepper].handle = 0;
+    steppers[number_stepper].handle = 0;
         
 		number_stepper++;
 	}
@@ -123,7 +173,7 @@ void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
 	{
 		steppers[number_stepper].type = armBaseRotation;
 		steppers[number_stepper].serial = (int) stepper_list["armBaseRotation"]["serial"];
-        steppers[number_stepper].handle = 0;
+    steppers[number_stepper].handle = 0;
         
 		number_stepper++;
 	}
@@ -131,7 +181,7 @@ void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
 	{
 		steppers[number_stepper].type = armShoulder;
 		steppers[number_stepper].serial = (int) stepper_list["armShoulder"]["serial"];
-        steppers[number_stepper].handle = 0;
+    steppers[number_stepper].handle = 0;
         
 		number_stepper++;
 	}
@@ -139,7 +189,7 @@ void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
 	{
 		steppers[number_stepper].type = armElbow;
 		steppers[number_stepper].serial = (int) stepper_list["armElbow"]["serial"];
-        steppers[number_stepper].handle = 0;
+    steppers[number_stepper].handle = 0;
         
 		number_stepper++;
 	}
@@ -147,7 +197,7 @@ void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
 	{
 		steppers[number_stepper].type = armWrist;
 		steppers[number_stepper].serial = (int) stepper_list["armWrist"]["serial"];
-        steppers[number_stepper].handle = 0;
+    steppers[number_stepper].handle = 0;
         
 		number_stepper++;
 	}
@@ -155,39 +205,41 @@ void init_servos_db(XmlRpc::XmlRpcValue stepper_list, ros::NodeHandle n)
 	{
 		steppers[number_stepper].type = armGripper;
 		steppers[number_stepper].serial = (int) stepper_list["armGripper"]["serial"];
-        steppers[number_stepper].handle = 0;
+    steppers[number_stepper].handle = 0;
         
 		number_stepper++;
 	}
 }
 
-
+// Intiailise all the stepper motor boards that have been registered in the yaml file and previously read.
 void init_stepper_boards()
 {
     int err;
     for(int i; i<number_stepper; i++)
-	{
+	  {
+      // create the stepper motor object
 	    err = CPhidgetStepper_create (&(steppers[i].handle));
 	    if (err != 0)
 	    {
 		    ROS_ERROR("error create the Phidget stepper controller device of serial number %d", steppers[i].serial);
 		    stepperError = 1;
 	    }
-	    
+	    // Open the Phidgets board
 	    err = CPhidget_open((CPhidgetHandle)steppers[i].handle, steppers[i].serial);
 	    if (err != 0)
 	    {
 		    ROS_ERROR("error opening the Phidget stepper controller device of serial number %d", steppers[i].serial);
 		    stepperError = 1;
 	    }
-
+      // Set the position callback
 	    CPhidgetStepper_set_OnPositionChange_Handler(steppers[i].handle, &positionCallback, (void*) &(steppers[i]));
-
+      // Attach the board.
       if((err = CPhidget_waitForAttachment((CPhidgetHandle)steppers[i].handle, 10000)))
 	    {
 		    ROS_ERROR("Problem waiting for attachment of Phidget stepper controller of serial number %d", steppers[i].serial);
 		    stepperError = 1;
 	    }
+      // Engage the stepper motor
 	    if(err = CPhidgetStepper_setEngaged(steppers[i].handle, 0, 1))
 	    {
 		    ROS_ERROR("Problem engaging Phidget stepper controller of serial number %d", steppers[i].serial);
@@ -196,7 +248,7 @@ void init_stepper_boards()
 	}
 }
 
-
+// Diagnostic
 void stepper_diagnostic (diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
   if (stepperError == 0)
@@ -221,40 +273,40 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "phidget_stepper");
 	ros::NodeHandle n;
 	ros::NodeHandle n_private("~");
-
+  diagnostic_updater::Updater updater;
 
 	//Read yalm file parameters.
 	XmlRpc::XmlRpcValue stepper_list;
-   	n_private.param("stepper_list", stepper_list, stepper_list);
+  n_private.param("stepper_list", stepper_list, stepper_list);
 
 
 	//Read information about the servos
 	steppers = (stepper*) malloc(stepper_list.size() * sizeof(stepper));
 	init_servos_db(stepper_list, n_private);
 
-
-  diagnostic_updater::Updater updater;
+  //Diagnostic
   updater.setHardwareIDf("Phidget");
-  updater.add("Stepper", stepper_diagnostic); // Function executed with updater.update()
+  // Function executed with updater.update()
+  updater.add("Stepper", stepper_diagnostic);
 
-    // Initialize all the boards using the serial numbers we got.
-    init_stepper_boards();
+  // Initialize all the boards using the serial numbers we got.
+  init_stepper_boards();
 
 
-    //Subscribe to the topic
-    ros::Subscriber stepperPos= n.subscribe("stepperPosition", 100, setStepperPosition);
+  //Subscribe to the topic
+  ros::Subscriber stepperPos= n.subscribe("stepperPosition", 100, setStepperPosition);
     
-    //Advertise topic
-    positionPublisher= n.advertise<corobot_msgs::PosMsg>("position_data", 100);
-    stepperPositionPublisher = n.advertise<corobot_msgs::MoveArm>("stepper_position",100);
-    ros::Rate rate(50);
+  //Advertise topic
+  positionPublisher= n.advertise<corobot_msgs::PosMsg>("position_data", 100);
+  stepperPositionPublisher = n.advertise<corobot_msgs::MoveArm>("stepper_position",100);
+  ros::Rate rate(50);
     
-    while(ros::ok())
-    {
-        updater.update();
-        ros::spinOnce();
-        rate.sleep();
-    }
+  while(ros::ok())
+  {
+      updater.update();
+      ros::spinOnce();
+      rate.sleep();
+  }
 	
 	free(steppers);
 	return 0;

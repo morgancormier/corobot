@@ -44,7 +44,7 @@ target_link_libraries(dynamic_sender uvc_cam)
 target_link_libraries(dynamic_sender ${OpenCV_LIBRARIES})
 
 add_executable(record_theora src/record_theora.cpp)
-target_link_libraries(record_theora theora theoraenc theoradec uvc_cam)
+target_link_libraries(record_theora theora theoraenc theoradec ogg uvc_cam)
 target_link_libraries(record_theora ${catkin_LIBRARIES})
 
 add_executable(dump_send src/dump/dump_send.cpp src/dump/avilib.c)

@@ -1,3 +1,32 @@
+/*
+ * Copyright (c) 2009, CoroWare
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Stanford U. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include "ros/ros.h"
 #include "ssc32.hpp"
 #include "corobot_msgs/MotorCommand.h"
@@ -15,38 +44,44 @@ SSC32 m_ssc32;
 
 std::string SSC32_PORT;
 ros::Timer timer;
-int ssc32Error = 0; // use for diagnostics purpose
 
+// use for diagnostics purpose
+int ssc32Error = 0; 
+
+// Inform us on which servo has already been moved at least once.
+// The size has been set to 20 to make sure there is enough place for all the servos. 
+// We want to avoid dynamic memory control to be faster
 bool first_time_command[20] = {false};
 
 
 
-
-void timerCallback(const ros::TimerEvent&)
 // stop the motors after the requested time
+// This is used only if some dc motors are connected to the ssc32 board
+void timerCallback(const ros::TimerEvent&)
 {
 	bool ret;	
 
-	m_ssc32.SendMessage(1,0,0);
+	ret = m_ssc32.SendMessage(1,0,0);
 	if (ret)
 		ssc32Error = 0;
 	else
 		ssc32Error = 2;
 
-	m_ssc32.SendMessage(0,0,0);
+	ret = m_ssc32.SendMessage(0,0,0);
 	if (ret)
 		ssc32Error = 0;
 	else
 		ssc32Error = 2;
 }
 
+// set the motors requested speed. 
+// This is used only if some dc motors are connected to the ssc32 board
 void SetSpeedTopic(const corobot_msgs::MotorCommand::ConstPtr &msg)
 {
-// set the motors requested speed. 
 	ros::NodeHandle n;
 	bool ret;
 
-	m_ssc32.SendMessage(1,(msg->leftSpeed*-5)+1500,(100-msg->acceleration)*10);
+	ret = m_ssc32.SendMessage(1,(msg->leftSpeed*-5)+1500,(100-msg->acceleration)*10);
 	if (ret)
 		ssc32Error = 0;
 	else
@@ -69,7 +104,8 @@ void SetSpeedTopic(const corobot_msgs::MotorCommand::ConstPtr &msg)
  */ 
 void setPositionCallback(const corobot_msgs::ServoPosition &msg)
 {
-	int amount =  (int) (msg.position / 180 * 1500) + 750;  //ideally, msg.position is between 0 and 150 degrees
+	//ideally, msg.position is between 0 and 150 degrees
+	int amount =  (int) (msg.position / 180 * 1500) + 750;  
 
 	// The first command should not contain any speed, so we are not sending any
 	bool ok;
@@ -90,10 +126,10 @@ void setPositionCallback(const corobot_msgs::ServoPosition &msg)
 	}
 }
 
-void ssc32_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 /**
  * Function that will report the status of the hardware to the diagnostic topic
  */
+void ssc32_diagnostic(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
 	if (!ssc32Error)  
 		stat.summaryf(diagnostic_msgs::DiagnosticStatus::OK, "initialized");
@@ -123,7 +159,8 @@ int main(int argc, char **argv)
 	//create an updater that will send information on the diagnostics topics
 	diagnostic_updater::Updater updater;
 	updater.setHardwareIDf("SSC32");
-	updater.add("SSC32", ssc32_diagnostic); //function that will be executed with updater.update()
+	//function that will be executed with updater.update()
+	updater.add("SSC32", ssc32_diagnostic); 
 
 	std::string ssc32_port_;
 
@@ -158,6 +195,7 @@ int main(int argc, char **argv)
 	while (ros::ok())
         {
                 ros::spinOnce();
+		// Diagnostic 
 		updater.update();
 	}
 
