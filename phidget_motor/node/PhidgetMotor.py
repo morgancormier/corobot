@@ -547,7 +547,7 @@ def setupMoveService():
         rightEncoderPub = rospy.Publisher("rwheel", Int16)
         diagnosticPub = rospy.Publisher('/diagnostics', DiagnosticArray)
         
-        rospy.Timer(1.0, diagnosticsCallback, oneshot=False)
+        rospy.Timer(rospy.Duration(1.0), diagnosticsCallback, oneshot=False)
 
         rospy.spin()
 
