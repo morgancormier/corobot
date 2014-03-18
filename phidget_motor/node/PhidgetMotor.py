@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
  * Copyright (c) 2009, CoroWare
  * All rights reserved.
@@ -27,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  """
 
-#!/usr/bin/env python
+
 """Phidgets HC Motor Control ROS service for CoroBot
 
 A ROS service to request a specific acceleration and individual
