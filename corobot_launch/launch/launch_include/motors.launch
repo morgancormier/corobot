@@ -6,8 +6,8 @@
 <!-- Note that it is assumed that if you don't have an explorer or a corobot 4 wheel drive you have a corobot 2 wheel drive -->
 <arg name="TwoWheelDrive" value="1"/> <!-- 1 if you have a 2wheel drive, with a caster -->
 <arg name="FourWheelDrive" value="0"/> <!-- 1 if you have a 4 Wheel Drive -->
-<arg name="base_width" value="0.25"/> <!-- 1 The length between the left and right wheel, taken at about the middle of the wheels, in meters-->
-<arg name="ticks_meter" value="9400"/> <!-- The number of encoder ticks per meter. This depends on the wheels and the encoders you have. See the ROS_Users_Guide.pdf that CoroWare distributes for more information on how to find this value for your robot-->
+<arg name="base_width" value="0.254"/> <!-- 1 The length between the left and right wheel, taken at about the middle of the wheels, in meters-->
+<arg name="ticks_meter" value="9685"/> <!-- The number of encoder ticks per meter. This depends on the wheels and the encoders you have. See the ROS_Users_Guide.pdf that CoroWare distributes for more information on how to find this value for your robot-->
 
 
 <!--***** Phidget Motor Controller *****-->
@@ -20,7 +20,7 @@
 
 <!--***** PID CONTROL *****-->
 
-<arg name="twistCommand" value="0"/> <!-- 1 if you want to enable commanding the robot with twist messages, 0 if you don't. You can change the PID parameters bellow -->
+<arg name="twistCommand" value="1"/> <!-- 1 if you want to enable commanding the robot with twist messages, 0 if you don't. You can change the PID parameters bellow -->
 
 
 
@@ -44,9 +44,9 @@
 
 
 	<group if="$(arg twistCommand)">
-		<rosparam param="ticks_meter">$(arg ticks_meter)</rosparam>
+		<rosparam param="ticks_meter">9685</rosparam>
 
-			<node pkg="differential_drive" type="pid_velocity.py" name="lpid_velocity">
+			<node pkg="differential-drive" type="pid_velocity.py" name="lpid_velocity">
 			    <remap from="wheel" to="lwheel"/>
 			    <remap from="motor_cmd" to="lmotor_cmd"/>
 			    <remap from="wheel_vtarget" to="lwheel_vtarget"/>
@@ -60,7 +60,7 @@
 			    <rosparam param="timeout_ticks">4</rosparam>
 			    <rosparam param="rolling_pts">8</rosparam>
 			</node>
-			<node pkg="differential_drive" type="pid_velocity.py" name="rpid_velocity">
+			<node pkg="differential-drive" type="pid_velocity.py" name="rpid_velocity">
 			    <remap from="wheel" to="rwheel"/>
 			    <remap from="motor_cmd" to="rmotor_cmd"/>
 			    <remap from="wheel_vtarget" to="rwheel_vtarget"/>
@@ -75,7 +75,7 @@
 			    <rosparam param="rolling_pts">8</rosparam>
 			</node>
 
-			<node pkg="differential_drive" type="twist_to_motors.py" name="twist_to_motors">
+			<node pkg="differential-drive" type="twist_to_motors.py" name="twist_to_motors">
 			  <rosparam param="base_width">$(arg base_width)</rosparam>
 			</node>
   </group>

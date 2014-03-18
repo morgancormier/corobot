@@ -3,9 +3,9 @@
 
 <!--***** GUI *****-->
 
-<arg name="gui" value="1"/> <!-- 1 if you want to start the GUI (corobot_teleop), 0 if you don't -->
-<arg name="cameraFront_jpeg_compression" value="1"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it. This should be the same as in the camera.launch file-->
-<arg name="cameraRear_jpeg_compression" value="1"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it. This should be the same as in the camera.launch file -->
+<arg name="gui" value="0"/> <!-- 1 if you want to start the GUI (corobot_teleop), 0 if you don't -->
+<arg name="cameraFront_jpeg_compression" value="0"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it. This should be the same as in the camera.launch file-->
+<arg name="cameraRear_jpeg_compression" value="0"/> <!-- 1 if you want to enable to jpeg compression for the image visualizer in the corobot_teleop GUI, 0 to unable it. This should be the same as in the camera.launch file -->
 
 <!--***** LCD Diagnostic *****-->
 <!-- Only useful if your robot has an LCD display -->
@@ -32,7 +32,7 @@
 
 <!--***** Joystick *****-->
 
-<arg name="joystick" value="1"/> <!-- 1 if you have one joystick, 0 if you don't -->
+<arg name="joystick" value="0"/> <!-- 1 if you have one joystick, 0 if you don't -->
 <arg name="joystick_port" value="/dev/input/js0"/> <!-- Port of the joystick -->
 
 
