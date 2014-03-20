@@ -44,7 +44,7 @@
 
 
 	<group if="$(arg twistCommand)">
-		<rosparam param="ticks_meter">9685</rosparam>
+		<rosparam param="ticks_meter">9435</rosparam>
 
 			<node pkg="differential-drive" type="pid_velocity.py" name="lpid_velocity">
 			    <remap from="wheel" to="lwheel"/>
