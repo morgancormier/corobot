@@ -68,11 +68,74 @@ double previous_x = 0;
 double previous_y = 0;
 double previous_th = 0;
 
+double previous_vx = 0;
+double previous_vy = 0;
+double previous_vth = 0;
+
 
 // Want to only update x,y,th after a certain amount of PosMsgs are received
 corobot_msgs::PosMsg previous;
 corobot_msgs::PosMsg current;
 
+std::vector<float> dists;
+
+
+bool x_startError = false;
+bool y_startError = false;
+bool th_startError = false;
+
+
+
+void errorAdjustment(const double dx, const double dth) {
+  //std::cout<<"\n\ndx: "<<dx<<" dth: "<<dth;
+
+  // Adjust theta
+  float th_error = -0.036206715*dth;// - 1.0380328655;
+  th = u.displaceAngle(th, th_error);
+  
+  float tempx = dx*cos(th);
+  float tempy = dx*sin(th);
+
+  // Adjust x
+  float x_error = -0.0205949485*tempx;// + 0.0089932463;
+  
+  // Adjust y
+  float y_error = -0.0205949485*tempy;// + 0.0089932463;
+
+
+  // Set the new x,y values
+  x += tempx;
+  y += tempy;
+
+
+  // Check if acceleration is higher than some threshold
+  double v_x = (x - previous_x) / (current.header.stamp.toSec() - previous.header.stamp.toSec());
+  double v_y = (y - previous_y) / (current.header.stamp.toSec() - previous.header.stamp.toSec());
+  double v_th = (th - previous_th) / (current.header.stamp.toSec() - previous.header.stamp.toSec());
+
+  double a_x = (v_x - previous_vx) / (current.header.stamp.toSec() - previous.header.stamp.toSec());
+  double a_y = (v_y - previous_vy) / (current.header.stamp.toSec() - previous.header.stamp.toSec());
+  double a_th = (v_th - previous_vth) / (current.header.stamp.toSec() - previous.header.stamp.toSec());
+  //std::cout<<"\n\nv_th: "<<v_th<<" previous_vth: "<<previous_vth<<" a_th: "<<a_th;
+
+  if( a_x > 0.6 && !x_startError && current.header.stamp != previous.header.stamp) {
+    x += 0.0089932463f;
+    x_startError = true;
+  }
+
+  if(a_y > 0.6 && !y_startError && current.header.stamp != previous.header.stamp) {
+    y += 0.0089932463f;
+    y_startError = true;
+  }
+
+  if( (a_th > 0.1 || a_th < -0.1) && !th_startError && current.header.stamp != previous.header.stamp) {
+    th -= (0.00174532 / 2.f);
+    th_startError = true;
+  }
+  else if(v_th > 0.001) {
+    th_startError = false;
+  }
+}
 
 
 /** This function sets the x, y, th, dx, and dth values */
@@ -90,9 +153,8 @@ void setValues() {
   // Check for if initialization is needed
   if(firstTime == false) { 
 
-    // Distance made by the left wheel
+    // Distance made by the left and right wheels
     double distance_left = ((double)(current.px - previous.px) * DistancePerCount);     	    
-    // Distance made by the right wheel
     double distance_right = ((double)(current.py - previous.py) * DistancePerCount); 
 
     // Get the overall distance traveled
@@ -108,9 +170,8 @@ void setValues() {
     // Displace th by dth
     th = u.displaceAngle(th, dth);
 
-    // Set the new x,y values
-    x += (dx * cos(th));
-    y += (dx * sin(th));
+    // Adjust for error
+    errorAdjustment(dx, dth);
   } // end if not first time
   // Else, set firstTime=false
   else {
@@ -217,6 +278,10 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
     previous_y = y;
     previous_th = th;
     previous.header.stamp = current.header.stamp;
+
+    previous_vx = odom.twist.twist.linear.x;
+    previous_vy = odom.twist.twist.linear.y;
+    previous_vth = odom.twist.twist.angular.z;
   }
 
   // Else, set velocities to zero
@@ -225,6 +290,13 @@ void publish_odometry(ros::Publisher& odom_pub, tf::TransformBroadcaster& odom_b
     odom.twist.twist.linear.y = 0;
     odom.twist.twist.angular.z = 0;
     previous.header.stamp = ros::Time::now();
+
+    previous_vx = 0;
+    previous_vy = 0;
+    previous_vth = 0;
+    x_startError = false;
+    y_startError = false;
+    th_startError = false;
   }
 	
   // These covariance values are "random". Some better values could be found after experiments and calculations
@@ -290,6 +362,11 @@ int main(int argc, char** argv) {
   ros::Rate r_deactivated(2); 
 
   tf::TransformBroadcaster broadcaster;
+
+
+  for(unsigned int i=0;i<3;i++) {
+    dists.push_back(0);
+  }
 
   while(n.ok()) {
     ros::spinOnce();

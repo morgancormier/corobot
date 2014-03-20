@@ -1,10 +1,23 @@
 #include "utility.h"
 
+Utility::Utility() {
+  ramp_msgs::Range range0; 
+  range0.min = 0;
+  range0.max = 3.5;
 
-Utility::Utility() {}
+  ramp_msgs::Range range1; 
+  range1.min = 0;
+  range1.max = 3.5;
 
+  ramp_msgs::Range range2; 
+  range2.min = -1;
+  range2.min = 1;
 
-Utility::~Utility() {}
+  standardRanges.push_back(range0);
+  standardRanges.push_back(range1);
+  standardRanges.push_back(range2);
+}
+
 
 /** This method returns the Euclidean distance between two position vectors */
 const float Utility::euclideanDistance(const std::vector<float> a, const std::vector<float> b) const {
@@ -23,9 +36,17 @@ const float Utility::findAngleFromAToB(const std::vector<float> a, const std::ve
   float d_y = b.at(1) - a.at(1);
   float euc_dist = sqrt( pow(d_x,2) + pow(d_y,2) );
   
-  // If the positions are the same, set the result to starting angle
-  if(euc_dist == 0) {
-    result = 0;
+  // If the positions are the same,
+  // Set the result to the starting orientation if one is provided
+  // Or to 0 if no starting orientation is provided
+  // TODO: Make the comparison proportionate to size of space
+  if(euc_dist <= 0.01) {
+    if(a.size() > 2) {
+      result = a.at(2);
+    }
+    else {
+      result = 0;
+    }
   }
 
   // If b is in the 1st or 2nd quadrants
@@ -50,13 +71,13 @@ const float Utility::findAngleFromAToB(const std::vector<float> a, const std::ve
 /** This method returns distance between orientations a1 and a2. The distance is in the range [-PI, PI]. */
 const float Utility::findDistanceBetweenAngles(const float a1, const float a2) const {
   float result;
-
   float difference = a1 - a2;
+  
   
   // If difference > pi, the result should be in [-PI,0] range
   if(difference > PI) {
     difference = fmodf(difference, PI);
-    result = (difference == 0) ? 0 : difference - PI;
+    result = difference - PI;
   }
 
   // If difference < -pi, the result should be in [0,PI] range
@@ -70,10 +91,10 @@ const float Utility::findDistanceBetweenAngles(const float a1, const float a2) c
   }
 
   return result;
-} //End findDistanceBetweenAngles 
+} //End findDistanceBetweenAngles
 
 
-// Displace angle a1 by angle a2. The result range is [-pi,pi]
+
 const float Utility::displaceAngle(const float a1, float a2) const {
 
   a2 = fmodf(a2, 2*PI);
@@ -84,5 +105,19 @@ const float Utility::displaceAngle(const float a1, float a2) const {
 
   return findDistanceBetweenAngles(a1, -a2);
 } //End displaceAngle
+
+
+
+/** a and b must be the same size */
+const float Utility::getEuclideanDist(const std::vector<float> a, const std::vector<float> b) const {
+  float result=0;
+
+  for(unsigned int i=0;i<a.size();i++) {
+    result += pow(a.at(i) - b.at(i), 2);
+  }
+  
+  result = sqrt(result);
+  return result;
+}
 
 
