@@ -478,6 +478,9 @@ def initMotorAndEncoderBoards():
 def diagnosticsCallback (event):
 
     array = DiagnosticArray()
+
+    # Set the timestamp for diagnostics
+    array.header.stamp = rospy.Time.now()
     
     motors_message = DiagnosticStatus(name = 'PhidgetMotors', level = 0,message = 'initialized', hardware_id='Phidget')
     
@@ -519,7 +522,7 @@ def setupMoveService():
             log_level = rospy.DEBUG
             )
 
-    global motorControl, encoders, minAcceleration, maxAcceleration, timer, motors_inverted, phidget1065, leftWheels, posdataPub, leftEncoderPub, rightEncoderPub, stop_when_obstacle
+    global motorControl, encoders, minAcceleration, maxAcceleration, timer, motors_inverted, phidget1065, leftWheels, posdataPub, leftEncoderPub, rightEncoderPub, stop_when_obstacle, diagnosticPub
     timer = 0
     
     motors_inverted = rospy.get_param('~motors_inverted', False)
