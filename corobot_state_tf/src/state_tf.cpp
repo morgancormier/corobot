@@ -90,22 +90,22 @@ void errorAdjustment(const double dx, const double dth) {
   //std::cout<<"\n\ndx: "<<dx<<" dth: "<<dth;
 
   // Adjust theta
-  float th_error = -0.036206715*dth;// - 1.0380328655;
+  float th_error = -0.031916573f*dth;// - .003808003;
   th = u.displaceAngle(th, th_error);
   
   float tempx = dx*cos(th);
   float tempy = dx*sin(th);
 
-  // Adjust x
-  float x_error = -0.0205949485*tempx;// + 0.0089932463;
+  // Calculate x error
+  float x_error = -0.0181546483f*tempx;// + 0.0008176502;
   
-  // Adjust y
-  float y_error = -0.0205949485*tempy;// + 0.0089932463;
+  // Calculate y error
+  float y_error = -0.0181546483f*tempy;// + 0.0008176502;
 
 
   // Set the new x,y values
-  x += tempx;
-  y += tempy;
+  x += (tempx + x_error);
+  y += (tempy + y_error);
 
 
   // Check if acceleration is higher than some threshold
@@ -119,17 +119,17 @@ void errorAdjustment(const double dx, const double dth) {
   //std::cout<<"\n\nv_th: "<<v_th<<" previous_vth: "<<previous_vth<<" a_th: "<<a_th;
 
   if( a_x > 0.6 && !x_startError && current.header.stamp != previous.header.stamp) {
-    x += 0.0089932463f;
+    x += 0.009810897f/2.f;
     x_startError = true;
   }
 
   if(a_y > 0.6 && !y_startError && current.header.stamp != previous.header.stamp) {
-    y += 0.0089932463f;
+    y += 0.009810897f/2.f;
     y_startError = true;
   }
 
   if( (a_th > 0.1 || a_th < -0.1) && !th_startError && current.header.stamp != previous.header.stamp) {
-    th -= (0.00174532 / 2.f);
+    th -= (0.003808003f / 2.f);
     th_startError = true;
   }
   else if(v_th > 0.001) {
