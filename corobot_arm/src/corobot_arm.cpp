@@ -100,7 +100,7 @@ void setServoPosition(const corobot_msgs::MoveArm &msg)
 {
 	corobot_msgs::ServoPosition msg_sending;
 	
-	for(int i; i<number_servo; i++)
+	for(int i=0; i<number_servo; i++)
 	{
 		msg_sending.index = -1;
 
