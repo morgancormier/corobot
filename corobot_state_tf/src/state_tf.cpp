@@ -90,7 +90,7 @@ void errorAdjustment(const double dx, const double dth) {
   //std::cout<<"\n\ndx: "<<dx<<" dth: "<<dth;
 
   // Adjust theta
-  float th_error = -0.031916573f*dth;// - .003808003;
+  float th_error = -0.042555431f*dth;
   th = u.displaceAngle(th, th_error);
   
   float tempx = dx*cos(th);
@@ -129,7 +129,7 @@ void errorAdjustment(const double dx, const double dth) {
   }
 
   if( (a_th > 0.1 || a_th < -0.1) && !th_startError && current.header.stamp != previous.header.stamp) {
-    th -= (0.003808003f / 2.f);
+    th -= (0.005077337f / 2.f);
     th_startError = true;
   }
   else if(v_th > 0.001) {
