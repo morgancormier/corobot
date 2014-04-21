@@ -6,7 +6,6 @@
 #include <string>
 #include <sstream>
 #include <math.h>
-#include "ramp_msgs/Range.h"
 
 #define PI 3.14159f
 
@@ -15,8 +14,6 @@ class Utility {
     
     Utility();
     ~Utility() {}
-
-    std::vector<ramp_msgs::Range> standardRanges;
     
     const float euclideanDistance(const std::vector<float> a, const std::vector<float> b) const;
 

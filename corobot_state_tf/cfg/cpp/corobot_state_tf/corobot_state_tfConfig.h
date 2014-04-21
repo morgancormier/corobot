@@ -164,7 +164,7 @@ namespace corobot_state_tf
 
       void convertParams()
       {
-        for(std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = abstract_parameters.begin(); i != abstract_parameters.end(); i++)
+        for(std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = abstract_parameters.begin(); i != abstract_parameters.end(); ++i)
         {
           parameters.push_back(dynamic_reconfigure::ParamDescription(**i));
         }
@@ -193,8 +193,8 @@ namespace corobot_state_tf
         PT* config = boost::any_cast<PT*>(cfg);
         if(!dynamic_reconfigure::ConfigTools::getGroupState(msg, name, (*config).*field))
           return false;
-        
-        for(std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = groups.begin(); i != groups.end(); i++) 
+
+        for(std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = groups.begin(); i != groups.end(); ++i)
         {
           boost::any n = &((*config).*field);
           if(!(*i)->fromMessage(msg, n))
@@ -210,14 +210,14 @@ namespace corobot_state_tf
         T* group = &((*config).*field);
         group->state = state;
 
-        for(std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = groups.begin(); i != groups.end(); i++)
+        for(std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = groups.begin(); i != groups.end(); ++i)
         {
           boost::any n = boost::any(&((*config).*field));
           (*i)->setInitialState(n);
         }
 
       }
-      
+
       virtual void updateParams(boost::any &cfg, corobot_state_tfConfig &top) const
       {
         PT* config = boost::any_cast<PT*>(cfg);
@@ -225,7 +225,7 @@ namespace corobot_state_tf
         T* f = &((*config).*field);
         f->setParams(top, abstract_parameters);
 
-        for(std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = groups.begin(); i != groups.end(); i++) 
+        for(std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = groups.begin(); i != groups.end(); ++i)
         {
           boost::any n = &((*config).*field);
           (*i)->updateParams(n, top);
@@ -237,7 +237,7 @@ namespace corobot_state_tf
         const PT config = boost::any_cast<PT>(cfg);
         dynamic_reconfigure::ConfigTools::appendGroup<T>(msg, name, id, parent, config.*field);
 
-        for(std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = groups.begin(); i != groups.end(); i++)
+        for(std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = groups.begin(); i != groups.end(); ++i)
         {
           (*i)->toMessage(msg, config.*field);
         }
@@ -258,7 +258,7 @@ class DEFAULT
 
     void setParams(corobot_state_tfConfig &config, const std::vector<AbstractParamDescriptionConstPtr> params)
     {
-      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = params.begin(); i != params.end(); i++)
+      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = params.begin(); i != params.end(); ++i)
       {
         boost::any val;
         (*i)->getValue(config, val);
@@ -287,7 +287,7 @@ class DEFAULT
       const std::vector<AbstractGroupDescriptionConstPtr> &__group_descriptions__ = __getGroupDescriptions__();
 
       int count = 0;
-      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); i++)
+      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); ++i)
         if ((*i)->fromMessage(msg, *this))
           count++;
 
@@ -328,10 +328,10 @@ class DEFAULT
     void __toMessage__(dynamic_reconfigure::Config &msg, const std::vector<AbstractParamDescriptionConstPtr> &__param_descriptions__, const std::vector<AbstractGroupDescriptionConstPtr> &__group_descriptions__) const
     {
       dynamic_reconfigure::ConfigTools::clear(msg);
-      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); i++)
+      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); ++i)
         (*i)->toMessage(msg, *this);
 
-      for (std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = __group_descriptions__.begin(); i != __group_descriptions__.end(); i++)
+      for (std::vector<AbstractGroupDescriptionConstPtr>::const_iterator i = __group_descriptions__.begin(); i != __group_descriptions__.end(); ++i)
       {
         if((*i)->id == 0)
         {
@@ -350,7 +350,7 @@ class DEFAULT
     void __toServer__(const ros::NodeHandle &nh) const
     {
       const std::vector<AbstractParamDescriptionConstPtr> &__param_descriptions__ = __getParamDescriptions__();
-      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); i++)
+      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); ++i)
         (*i)->toServer(nh, *this);
     }
 
@@ -359,7 +359,7 @@ class DEFAULT
       static bool setup=false;
 
       const std::vector<AbstractParamDescriptionConstPtr> &__param_descriptions__ = __getParamDescriptions__();
-      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); i++)
+      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); ++i)
         (*i)->fromServer(nh, *this);
 
       const std::vector<AbstractGroupDescriptionConstPtr> &__group_descriptions__ = __getGroupDescriptions__();
@@ -377,7 +377,7 @@ class DEFAULT
       const std::vector<AbstractParamDescriptionConstPtr> &__param_descriptions__ = __getParamDescriptions__();
       const corobot_state_tfConfig &__max__ = __getMax__();
       const corobot_state_tfConfig &__min__ = __getMin__();
-      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); i++)
+      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); ++i)
         (*i)->clamp(*this, __max__, __min__);
     }
 
@@ -385,7 +385,7 @@ class DEFAULT
     {
       const std::vector<AbstractParamDescriptionConstPtr> &__param_descriptions__ = __getParamDescriptions__();
       uint32_t level = 0;
-      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); i++)
+      for (std::vector<AbstractParamDescriptionConstPtr>::const_iterator i = __param_descriptions__.begin(); i != __param_descriptions__.end(); ++i)
         (*i)->calcLevel(level, config, *this);
       return level;
     }
@@ -429,8 +429,8 @@ corobot_state_tfConfig::GroupDescription<corobot_state_tfConfig::DEFAULT, corobo
 //#line 233 "/opt/ros/hydro/lib/python2.7/dist-packages/dynamic_reconfigure/parameter_generator.py"
       __group_descriptions__.push_back(corobot_state_tfConfig::AbstractGroupDescriptionConstPtr(new corobot_state_tfConfig::GroupDescription<corobot_state_tfConfig::DEFAULT, corobot_state_tfConfig>(Default)));
 //#line 390 "/opt/ros/hydro/share/dynamic_reconfigure/templates/ConfigType.h.template"
-    
-      for (std::vector<corobot_state_tfConfig::AbstractGroupDescriptionConstPtr>::const_iterator i = __group_descriptions__.begin(); i != __group_descriptions__.end(); i++)
+
+      for (std::vector<corobot_state_tfConfig::AbstractGroupDescriptionConstPtr>::const_iterator i = __group_descriptions__.begin(); i != __group_descriptions__.end(); ++i)
       {
         __description_message__.groups.push_back(**i);
       }
