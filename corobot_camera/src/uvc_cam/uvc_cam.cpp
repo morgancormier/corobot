@@ -267,7 +267,7 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
 
 
  // init_mjpeg_decoder(width, height);
-  jpegBuf = (unsigned char*) malloc(width*height*3);
+  jpegBuf = new unsigned char[width*height*3];
 }
 
 Cam::~Cam()
@@ -288,7 +288,7 @@ Cam::~Cam()
   last_yuv_frame = rgb_frame = NULL;
 
   if(jpegBuf)
-    free(jpegBuf);
+    delete [] jpegBuf;
 }
 
 void Cam::enumerate()
